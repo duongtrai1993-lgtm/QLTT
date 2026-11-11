@@ -1,69 +1,100 @@
 import React from 'react';
 import { X, Printer, FileSpreadsheet } from 'lucide-react';
-import { formatVND, formatNumber, formatDate } from '../services/storageService';
+import { formatVND, formatNumber, formatDate, numberToVietnameseWords } from '../services/storageService';
 import { exportService } from '../services/exportService';
-import { SAMPLE_FORM_03A_ITEMS } from '../data/sampleData';
+import { SAMPLE_FORM_03A_SECTIONS } from '../data/sampleData';
 
 export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
   if (!isOpen || !payment) return null;
 
-  const items = SAMPLE_FORM_03A_ITEMS;
+  const sections = SAMPLE_FORM_03A_SECTIONS;
 
-  const totalContract = items.reduce((s, i) => s + (Number(i.contractAmount) || 0), 0);
-  const totalPrev = items.reduce((s, i) => s + (Number(i.prevCumulativeAmount) || 0), 0);
-  const totalThis = items.reduce((s, i) => s + (Number(i.thisPeriodAmount) || 0), 0);
-  const totalCum = items.reduce((s, i) => s + (Number(i.totalCumulativeAmount) || 0), 0);
+  // Flatten all items for total calculation
+  const allItems = sections.flatMap(s => s.items);
 
-  // Tính toán số liệu tạm ứng theo NĐ 254/2025/NĐ-CP
-  const contractVal = Number(contract?.adjustedValue || contract?.originalValue || 0);
-  const totalAdvancePaid = contractVal * ((contract?.advanceRate || 20) / 100);
-  const advanceDeductedThisPeriod = Number(payment?.advanceDeduction || 0);
-  const retentionThisPeriod = Number(payment?.retentionDeduction || 0);
-  const penaltyThisPeriod = Number(payment?.penaltyDeduction || 0);
-  const netPayableAmount = Number(payment?.requestedAmount || (totalThis - advanceDeductedThisPeriod - retentionThisPeriod - penaltyThisPeriod));
+  const totalContractVal = allItems.reduce((s, i) => s + (Number(i.contractVal) || 0), 0);
+  const totalPrevUnpaidVal = allItems.reduce((s, i) => s + (Number(i.prevUnpaidVal) || 0), 0);
+  const totalThisPeriodAcceptedVal = allItems.reduce((s, i) => s + (Number(i.thisPeriodAcceptedVal) || 0), 0);
+  const totalThisPeriodRequestedVal = allItems.reduce((s, i) => s + (Number(i.thisPeriodRequestedVal) || 0), 0);
+  const totalThisPeriodUnpaidVal = allItems.reduce((s, i) => s + (Number(i.thisPeriodUnpaidVal) || 0), 0);
+  const totalPrevPaidVal = allItems.reduce((s, i) => s + (Number(i.prevPaidVal) || 0), 0);
+  const totalPaidToDateVal = allItems.reduce((s, i) => s + (Number(i.totalPaidToDateVal) || 0), 0);
+
+  // Tính toán số liệu theo 6 mục chuẩn Nghị định 254/2025/NĐ-CP Phụ lục 03.a/TT
+  const contractTotal = Number(contract?.adjustedValue || contract?.originalValue || totalContractVal);
+  const advanceRate = contract?.advanceRate || 20;
+  const totalAdvanceOriginally = Math.round(contractTotal * (advanceRate / 100));
+
+  // 1. Giá trị tạm ứng còn lại chưa thu hồi đến hết kỳ trước
+  const advanceDeductedPrev = Math.max(0, Math.round(totalPrevPaidVal * 0.2));
+  const advanceRemainingPrev = Math.max(0, totalAdvanceOriginally - advanceDeductedPrev);
+
+  // 2. Số tiền đã thanh toán khối lượng hoàn thành đến hết kỳ trước
+  const prevCompletedPaidTotal = totalPrevPaidVal;
+  const prevPaidContractor = Math.round(prevCompletedPaidTotal * 0.95);
+  const prevRetentionFund = Math.round(prevCompletedPaidTotal * 0.05);
+  const prevPendingEscrow = 0;
+
+  // 3. Luỹ kế giá trị khối lượng thực hiện đến hết kỳ này
+  const cumulativeWorkCompleted = totalPrevPaidVal + (payment.workCompletedValue || totalThisPeriodAcceptedVal);
+
+  // 4. Thanh toán để thu hồi tạm ứng
+  const advanceRecoveryThisPeriod = Number(payment.advanceDeduction || Math.round(totalThisPeriodRequestedVal * 0.2));
+
+  // 5. Giá trị đề nghị giải ngân kỳ này
+  const retentionThisPeriod = Number(payment.retentionDeduction || Math.round(totalThisPeriodRequestedVal * 0.05));
+  const netPaidToContractorThisPeriod = Math.max(0, totalThisPeriodRequestedVal - advanceRecoveryThisPeriod - retentionThisPeriod);
+  const totalDisbursementRequestedThisPeriod = Number(payment.requestedAmount || (totalThisPeriodRequestedVal - advanceRecoveryThisPeriod));
+
+  const wordsAmount = numberToVietnameseWords(totalDisbursementRequestedThisPeriod);
+
+  // 6. Luỹ kế giá trị giải ngân
+  const totalAdvanceDisbursedCum = totalAdvanceOriginally;
+  const totalCompletedDisbursedCum = prevCompletedPaidTotal + totalDisbursementRequestedThisPeriod;
+  const grandTotalDisbursedCum = totalAdvanceDisbursedCum + totalCompletedDisbursedCum;
 
   const handlePrint = () => {
     window.print();
   };
 
   const handleExportExcel = () => {
-    exportService.exportForm03aExcel(project, contract, payment, items);
+    exportService.exportForm03aExcel(project, contract, payment, sections);
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[92vh] flex flex-col border border-slate-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-[95vw] w-full max-h-[96vh] flex flex-col border border-slate-300">
         
         {/* Header no-print */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 rounded-t-xl no-print">
+        <div className="px-6 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50 rounded-t-xl no-print">
           <div>
             <div className="flex items-center gap-2">
               <span className="p-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm">📋</span>
               <h2 className="text-base font-bold text-slate-800">
-                Bảng Xác Định Giá Trị Khối Lượng Hoàn Thành (Mẫu số 03.a/TT)
+                Bảng Xác Định Giá Trị Khối Lượng Công Việc Hoàn Thành (Phụ lục 03.a/TT)
               </h2>
-              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md text-[11px] font-extrabold border border-emerald-300">
+              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-xs font-bold border border-emerald-300">
                 Nghị định 254/2025/NĐ-CP
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Ban hành kèm theo Nghị định số 254/2025/NĐ-CP ngày 26/09/2025 của Chính phủ (thay thế Nghị định 99/2021/NĐ-CP)
+              Căn cứ theo Nghị định số 254/2025/NĐ-CP ngày 26/9/2025 của Chính Phủ - Phụ lục 03.a/TT
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleExportExcel}
-              className="px-3.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg flex items-center gap-1.5 transition"
-              title="Xuất bảng tính đầy đủ sang Excel chuẩn NĐ 254/2025"
+              className="px-3.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg flex items-center gap-1.5 transition shadow-sm"
+              title="Xuất Excel theo đúng 19 cột chuẩn NĐ 254/2025"
             >
               <FileSpreadsheet className="w-4 h-4" />
               Xuất Excel (.xlsx)
             </button>
             <button
               onClick={handlePrint}
-              className="px-3.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1.5 transition"
-              title="In ra giấy hoặc lưu thành file PDF"
+              className="px-3.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-lg flex items-center gap-1.5 transition shadow-sm"
+              title="In ra giấy hoặc lưu thành file PDF chuẩn A4"
             >
               <Printer className="w-4 h-4" />
               In / Xuất PDF
@@ -78,213 +109,210 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
         </div>
 
         {/* Printable Paper Area */}
-        <div className="overflow-y-auto p-6 md:p-8 space-y-6 text-slate-900 bg-white" id="printable-form-03a">
+        <div className="overflow-y-auto p-4 md:p-8 space-y-4 text-slate-900 bg-white text-xs font-['Times_New_Roman',serif]" id="printable-form-03a">
           
-          {/* Header Văn Bản Chuẩn */}
-          <div className="grid grid-cols-2 text-center text-xs pb-4 border-b border-slate-300">
-            <div>
-              <p className="font-semibold uppercase tracking-wider">{project?.owner || "BAN QUẢN LÝ DỰ ÁN"}</p>
-              <p className="font-bold text-sm uppercase mt-1">{contract?.packageName || "GÓI THẦU XÂY LẮP"}</p>
-              <p className="text-slate-500 mt-1">Hợp đồng số: {contract?.code} ngày {formatDate(contract?.signDate)}</p>
-            </div>
-            <div>
-              <p className="font-bold uppercase tracking-wider">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-              <p className="font-medium underline underline-offset-4">Độc lập - Tự do - Hạnh phúc</p>
-              <p className="italic text-slate-500 mt-2">Ngày {new Date().getDate()} tháng {new Date().getMonth() + 1} năm {new Date().getFullYear()}</p>
-            </div>
-          </div>
-
+          {/* Header Title theo mẫu chính xác */}
           <div className="text-center space-y-1">
-            <span className="inline-block px-3 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
-              Mẫu số 03.a/TT - Nghị định số 254/2025/NĐ-CP
-            </span>
-            <h1 className="text-base font-extrabold uppercase text-slate-900 tracking-wide pt-1">
+            <h1 className="text-sm md:text-base font-bold uppercase tracking-wide text-slate-900">
               BẢNG XÁC ĐỊNH GIÁ TRỊ KHỐI LƯỢNG CÔNG VIỆC HOÀN THÀNH
             </h1>
-            <p className="text-xs font-semibold uppercase text-blue-800">
-              {payment.title}
+            <p className="italic text-[11px] text-slate-700">
+              (Căn cứ theo Nghị định 254/2025/NĐ-CP ngày 26/9/2025 của Chính Phủ - Phụ lục 03.a/TT)
             </p>
-            <p className="text-xs text-slate-500 italic">
-              (Giai đoạn thi công từ ngày {formatDate(payment.periodFrom)} đến ngày {formatDate(payment.periodTo)})
+            <p className="font-bold uppercase text-xs pt-1">
+              CÔNG TRÌNH: {contract?.packageName || project?.name}
+            </p>
+            <p className="font-bold uppercase text-xs">
+              HẠNG MỤC: Hạng mục 1
             </p>
           </div>
 
-          {/* Căn cứ pháp lý & Thông tin hợp đồng theo NĐ 254/2025/NĐ-CP */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5 text-xs bg-slate-50 p-3.5 rounded-lg border border-slate-200">
-            <div><span className="font-semibold text-slate-700">• Căn cứ pháp lý:</span> Nghị định số 254/2025/NĐ-CP của Chính phủ</div>
-            <div><span className="font-semibold text-slate-700">• Tên dự án:</span> {project?.name}</div>
-            <div><span className="font-semibold text-slate-700">• Chủ đầu tư:</span> {project?.owner}</div>
-            <div><span className="font-semibold text-slate-700">• Nhà thầu thi công:</span> {contract?.contractor}</div>
-            <div><span className="font-semibold text-slate-700">• Giá trị hợp đồng ký kết:</span> {formatVND(contract?.adjustedValue || contract?.originalValue)}</div>
-            <div><span className="font-semibold text-slate-700">• Tỷ lệ tạm ứng theo HĐ:</span> {contract?.advanceRate}% ({formatVND(totalAdvancePaid)})</div>
+          {/* Metadata Section */}
+          <div className="space-y-1 text-xs pt-2">
+            <div><span className="font-bold">Tên dự án:</span> {project?.name}</div>
+            <div><span className="font-bold">Mã dự án:</span> {project?.code}</div>
+            <div><span className="font-bold">Căn cứ Bảng thông tin của Hợp đồng số:</span> {contract?.code} ngày {formatDate(contract?.signDate)}</div>
+            <div><span className="font-bold">Căn cứ Bảng thông tin Dự toán số:</span> DT-{project?.code || '01'}</div>
+            <div><span className="font-bold">Chủ đầu tư:</span> {project?.owner}</div>
+            <div><span className="font-bold">Nhà thầu (đơn vị thực hiện trong trường hợp thực hiện không thông qua hợp đồng):</span> {contract?.contractor}</div>
+            <div><span className="font-bold">Thanh toán lần thứ:</span> {payment.stageNumber}</div>
+            <div><span className="font-bold">Căn cứ Biên bản nghiệm thu số:</span> 0{payment.stageNumber}/NT-GĐ/2026 &nbsp;&nbsp;&nbsp;&nbsp; Ngày {new Date().getDate()} tháng {new Date().getMonth() + 1} năm {new Date().getFullYear()}</div>
           </div>
 
-          {/* Table 12 columns */}
-          <div className="overflow-x-auto border border-slate-300 rounded">
-            <table className="w-full text-[11px] border-collapse border border-slate-300">
-              <thead className="bg-slate-100 text-slate-800 font-bold text-center">
+          {/* 19-Column Table */}
+          <div className="overflow-x-auto border border-black pt-1">
+            <table className="w-full text-[10px] border-collapse border border-black font-['Times_New_Roman',serif]">
+              <thead className="bg-slate-100 text-center font-bold">
                 <tr>
-                  <th rowSpan="2" className="border border-slate-300 px-2 py-1 w-8">STT</th>
-                  <th rowSpan="2" className="border border-slate-300 px-3 py-1 min-w-[200px]">Nội dung công việc</th>
-                  <th rowSpan="2" className="border border-slate-300 px-2 py-1 w-12">ĐVT</th>
-                  <th colSpan="3" className="border border-slate-300 px-2 py-1 bg-blue-50">Theo Hợp đồng</th>
-                  <th colSpan="2" className="border border-slate-300 px-2 py-1">Lũy kế hết kỳ trước</th>
-                  <th colSpan="2" className="border border-slate-300 px-2 py-1 bg-emerald-50">Thực hiện kỳ này</th>
-                  <th colSpan="2" className="border border-slate-300 px-2 py-1 bg-amber-50">Lũy kế hết kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1 w-6">STT</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1 w-14">Mã hiệu công việc</th>
+                  <th rowSpan="2" className="border border-black px-2 py-1 min-w-[150px]">Chỉ tiêu</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1 w-8">Đơn vị tính</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">KL theo hợp đồng /dự toán</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">KLHT chưa thanh toán đến hết kỳ trước</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">KLHT đã thanh toán đến hết kỳ trước</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">KLHT nghiệm thu trong kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">KLHT lũy kế đến hết kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">KLHT đề nghị thanh toán kỳ này</th>
+                  <th colSpan="2" className="border border-black px-1 py-0.5">Đơn giá thanh toán</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">Giá trị hợp đồng /dự toán</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">Giá trị KLHT chưa thanh toán đến hết kỳ trước</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">Giá trị KLHT nghiệm thu trong kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">Giá trị KLHT đề nghị thanh toán kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">Giá trị KLHT chưa thanh toán đến hết kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">Lũy kế giá trị KLHT đã thanh toán đến hết kỳ trước</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1">Lũy kế giá trị KLHT đã thanh toán đến hết kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-1 py-1 w-14">Ghi chú</th>
                 </tr>
-                <tr className="text-[10px]">
-                  <th className="border border-slate-300 px-2 py-1">Khối lượng</th>
-                  <th className="border border-slate-300 px-2 py-1">Đơn giá (đ)</th>
-                  <th className="border border-slate-300 px-2 py-1">Thành tiền (đ)</th>
-                  <th className="border border-slate-300 px-2 py-1">Khối lượng</th>
-                  <th className="border border-slate-300 px-2 py-1">Thành tiền (đ)</th>
-                  <th className="border border-slate-300 px-2 py-1">Khối lượng</th>
-                  <th className="border border-slate-300 px-2 py-1">Thành tiền (đ)</th>
-                  <th className="border border-slate-300 px-2 py-1">Khối lượng</th>
-                  <th className="border border-slate-300 px-2 py-1">Thành tiền (đ)</th>
-                </tr>
-                <tr className="text-[9px] bg-slate-200 text-slate-600">
-                  <th className="border border-slate-300 py-0.5">1</th>
-                  <th className="border border-slate-300 py-0.5">2</th>
-                  <th className="border border-slate-300 py-0.5">3</th>
-                  <th className="border border-slate-300 py-0.5">4</th>
-                  <th className="border border-slate-300 py-0.5">5</th>
-                  <th className="border border-slate-300 py-0.5">6 = 4 x 5</th>
-                  <th className="border border-slate-300 py-0.5">7</th>
-                  <th className="border border-slate-300 py-0.5">8</th>
-                  <th className="border border-slate-300 py-0.5">9</th>
-                  <th className="border border-slate-300 py-0.5">10 = 9 x 5</th>
-                  <th className="border border-slate-300 py-0.5">11 = 7 + 9</th>
-                  <th className="border border-slate-300 py-0.5">12 = 8 + 10</th>
+                <tr>
+                  <th className="border border-black px-1 py-0.5">Theo hợp đồng</th>
+                  <th className="border border-black px-1 py-0.5">Đơn giá bổ sung</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50">
-                    <td className="border border-slate-300 px-2 py-1.5 text-center font-medium">{row.stt}</td>
-                    <td className="border border-slate-300 px-2.5 py-1.5 font-medium text-slate-800">{row.name}</td>
-                    <td className="border border-slate-300 px-2 py-1.5 text-center text-slate-600">{row.unit}</td>
-                    <td className="border border-slate-300 px-2 py-1.5 text-right">{formatNumber(row.contractQty)}</td>
-                    <td className="border border-slate-300 px-2 py-1.5 text-right">{formatNumber(row.unitPrice)}</td>
-                    <td className="border border-slate-300 px-2 py-1.5 text-right font-semibold">{formatNumber(row.contractAmount)}</td>
-                    <td className="border border-slate-300 px-2 py-1.5 text-right text-slate-600">{formatNumber(row.prevCumulativeQty)}</td>
-                    <td className="border border-slate-300 px-2 py-1.5 text-right text-slate-600">{formatNumber(row.prevCumulativeAmount)}</td>
-                    <td className="border border-slate-300 px-2 py-1.5 text-right font-semibold text-emerald-700 bg-emerald-50/40">{formatNumber(row.thisPeriodQty)}</td>
-                    <td className="border border-slate-300 px-2 py-1.5 text-right font-bold text-emerald-700 bg-emerald-50/40">{formatNumber(row.thisPeriodAmount)}</td>
-                    <td className="border border-slate-300 px-2 py-1.5 text-right font-semibold text-amber-800 bg-amber-50/30">{formatNumber(row.totalCumulativeQty)}</td>
-                    <td className="border border-slate-300 px-2 py-1.5 text-right font-bold text-amber-800 bg-amber-50/30">{formatNumber(row.totalCumulativeAmount)}</td>
-                  </tr>
+                {sections.map(section => (
+                  <React.Fragment key={section.sectionCode}>
+                    {/* Section Header Row */}
+                    <tr className="bg-slate-200/80 font-bold">
+                      <td className="border border-black px-1 py-1 text-center">{section.sectionCode}</td>
+                      <td className="border border-black px-1 py-1"></td>
+                      <td colSpan="17" className="border border-black px-2 py-1 text-left uppercase">
+                        {section.sectionName}
+                      </td>
+                    </tr>
+
+                    {/* Items */}
+                    {section.items.map((row, rIdx) => (
+                      <tr key={rIdx} className="hover:bg-slate-50">
+                        <td className="border border-black px-1 py-1 text-center">{row.stt}</td>
+                        <td className="border border-black px-1 py-1 text-center font-mono text-[9px]">{row.jobCode}</td>
+                        <td className="border border-black px-1.5 py-1 text-left">{row.name}</td>
+                        <td className="border border-black px-1 py-1 text-center">{row.unit}</td>
+                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.contractQty)}</td>
+                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.prevUnpaidQty)}</td>
+                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.prevPaidQty)}</td>
+                        <td className="border border-black px-1 py-1 text-right font-medium">{formatNumber(row.thisPeriodAcceptedQty)}</td>
+                        <td className="border border-black px-1 py-1 text-right font-medium">{formatNumber(row.totalCumulativeQty)}</td>
+                        <td className="border border-black px-1 py-1 text-right font-semibold bg-emerald-50/50">{formatNumber(row.thisPeriodRequestedQty)}</td>
+                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.unitPriceContract)}</td>
+                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.unitPriceAdditional)}</td>
+                        <td className="border border-black px-1 py-1 text-right font-medium">{formatNumber(row.contractVal)}</td>
+                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.prevUnpaidVal)}</td>
+                        <td className="border border-black px-1 py-1 text-right font-medium">{formatNumber(row.thisPeriodAcceptedVal)}</td>
+                        <td className="border border-black px-1 py-1 text-right font-bold text-emerald-800 bg-emerald-50/50">{formatNumber(row.thisPeriodRequestedVal)}</td>
+                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.thisPeriodUnpaidVal)}</td>
+                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.prevPaidVal)}</td>
+                        <td className="border border-black px-1 py-1 text-right font-bold text-amber-900 bg-amber-50/40">{formatNumber(row.totalPaidToDateVal)}</td>
+                        <td className="border border-black px-1 py-1 text-center text-[9px]">{row.note}</td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
                 ))}
-                
-                {/* Total Row */}
-                <tr className="bg-slate-100 font-extrabold text-slate-900 border-t-2 border-slate-400">
-                  <td colSpan="3" className="border border-slate-300 px-3 py-2 text-center uppercase tracking-wide">
-                    TỔNG CỘNG (VNĐ)
+
+                {/* Tổng số row */}
+                <tr className="bg-slate-200 font-bold border-t-2 border-black">
+                  <td colSpan="4" className="border border-black px-2 py-1.5 text-center uppercase tracking-wider font-extrabold">
+                    Tổng số:
                   </td>
-                  <td className="border border-slate-300"></td>
-                  <td className="border border-slate-300"></td>
-                  <td className="border border-slate-300 px-2 py-2 text-right">{formatNumber(totalContract)}</td>
-                  <td className="border border-slate-300"></td>
-                  <td className="border border-slate-300 px-2 py-2 text-right">{formatNumber(totalPrev)}</td>
-                  <td className="border border-slate-300"></td>
-                  <td className="border border-slate-300 px-2 py-2 text-right text-emerald-700">{formatNumber(totalThis)}</td>
-                  <td className="border border-slate-300"></td>
-                  <td className="border border-slate-300 px-2 py-2 text-right text-amber-800">{formatNumber(totalCum)}</td>
+                  <td className="border border-black"></td>
+                  <td className="border border-black"></td>
+                  <td className="border border-black"></td>
+                  <td className="border border-black"></td>
+                  <td className="border border-black"></td>
+                  <td className="border border-black"></td>
+                  <td className="border border-black"></td>
+                  <td className="border border-black"></td>
+                  <td className="border border-black px-1 py-1 text-right font-extrabold">{formatNumber(totalContractVal)}</td>
+                  <td className="border border-black px-1 py-1 text-right font-extrabold">{formatNumber(totalPrevUnpaidVal)}</td>
+                  <td className="border border-black px-1 py-1 text-right font-extrabold">{formatNumber(totalThisPeriodAcceptedVal)}</td>
+                  <td className="border border-black px-1 py-1 text-right font-extrabold text-emerald-900 bg-emerald-100">{formatNumber(totalThisPeriodRequestedVal)}</td>
+                  <td className="border border-black px-1 py-1 text-right font-extrabold">{formatNumber(totalThisPeriodUnpaidVal)}</td>
+                  <td className="border border-black px-1 py-1 text-right font-extrabold">{formatNumber(totalPrevPaidVal)}</td>
+                  <td className="border border-black px-1 py-1 text-right font-extrabold text-amber-900 bg-amber-100">{formatNumber(totalPaidToDateVal)}</td>
+                  <td className="border border-black"></td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          {/* Bảng tổng hợp các chỉ tiêu chuẩn theo Nghị định 254/2025/NĐ-CP */}
-          <div className="bg-slate-50 border border-slate-300 rounded-lg p-4 space-y-3 text-xs">
-            <div className="flex items-center justify-between border-b pb-2">
-              <h3 className="font-bold text-slate-800 uppercase tracking-wide">
-                TỔNG HỢP CÁC CHỈ TIÊU THANH TOÁN (THEO NGHỊ ĐỊNH SỐ 254/2025/NĐ-CP)
-              </h3>
-              <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                Đợt {payment.stageNumber}
-              </span>
-            </div>
+          {/* 6 Mục Tổng Hợp Số Liệu Chuẩn Theo Phụ Lục 03.a/TT */}
+          <div className="space-y-1.5 pt-3 text-xs border-t border-slate-300">
+            <p>
+              <strong>1. Giá trị tạm ứng còn lại chưa thu hồi đến hết kỳ trước:</strong> {formatVND(advanceRemainingPrev)}
+            </p>
+            <p>
+              <strong>2. Số tiền đã thanh toán khối lượng hoàn thành đến hết kỳ trước:</strong> {formatVND(prevCompletedPaidTotal)}
+            </p>
+            <p className="pl-6">
+              2.1. Thanh toán cho nhà thầu: {formatVND(prevPaidContractor)}
+            </p>
+            <p className="pl-6">
+              2.2. Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): {formatVND(prevRetentionFund)}
+            </p>
+            <p className="pl-6">
+              2.3. Chuyển vào tài khoản tạm giữ chờ quyết toán: {formatVND(prevPendingEscrow)}
+            </p>
+            <p>
+              <strong>3. Luỹ kế giá trị khối lượng thực hiện đến hết kỳ này:</strong> {formatVND(cumulativeWorkCompleted)}
+            </p>
+            <p>
+              <strong>4. Thanh toán để thu hồi tạm ứng:</strong> {formatVND(advanceRecoveryThisPeriod)}
+            </p>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <div className="flex justify-between py-1 border-b border-slate-200">
-                  <span className="text-slate-700 font-medium">I. Lũy kế giá trị khối lượng thực hiện đến hết kỳ này:</span>
-                  <span className="font-bold text-slate-900">{formatVND(totalCum)}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-200 pl-3 text-slate-600">
-                  <span>- Lũy kế đến hết kỳ trước:</span>
-                  <span>{formatVND(totalPrev)}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-200 pl-3 text-slate-600">
-                  <span>- Khối lượng hoàn thành phát sinh kỳ này:</span>
-                  <span className="font-semibold text-slate-800">{formatVND(payment.workCompletedValue || totalThis)}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-200 text-rose-700">
-                  <span className="font-medium">II. Khấu trừ thu hồi tạm ứng kỳ này:</span>
-                  <span className="font-bold">- {formatVND(advanceDeductedThisPeriod)}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-200 text-amber-700">
-                  <span className="font-medium">III. Khấu trừ giữ lại bảo hành ({contract?.retentionRate || 5}%):</span>
-                  <span className="font-bold">- {formatVND(retentionThisPeriod)}</span>
-                </div>
-                {penaltyThisPeriod > 0 && (
-                  <div className="flex justify-between py-1 border-b border-slate-200 text-slate-700">
-                    <span className="font-medium">IV. Khấu trừ vi phạm / khác:</span>
-                    <span className="font-bold">- {formatVND(penaltyThisPeriod)}</span>
-                  </div>
-                )}
-              </div>
+            <div className="space-y-1 bg-slate-50 p-3 rounded border border-slate-300">
+              <p>
+                <strong>5. Giá trị đề nghị giải ngân kỳ này:</strong> <span className="font-bold text-sm text-blue-800">{formatVND(totalDisbursementRequestedThisPeriod)}</span>
+              </p>
+              <p className="italic pl-4 text-slate-700">
+                • Số tiền bằng chữ: <strong>{wordsAmount}</strong> (là số tiền đề nghị giải ngân kỳ này), trong đó:
+              </p>
+              <p className="pl-8">- Tạm ứng: 0 ₫</p>
+              <p className="pl-8">- Thanh toán khối lượng hoàn thành: {formatVND(totalDisbursementRequestedThisPeriod)}</p>
+              <p className="pl-12">+ Thanh toán cho nhà thầu: <strong className="text-emerald-700">{formatVND(netPaidToContractorThisPeriod)}</strong></p>
+              <p className="pl-12">+ Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): <strong>{formatVND(retentionThisPeriod)}</strong></p>
+              <p className="pl-12">+ Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 ₫</p>
+            </div>
 
-              <div className="flex flex-col justify-between bg-emerald-50/70 p-4 rounded-lg border border-emerald-300">
-                <div>
-                  <span className="text-[11px] uppercase font-bold text-slate-600 block">
-                    Cơ quan kiểm soát, thanh toán: Kho bạc Nhà nước
-                  </span>
-                  <span className="text-xs uppercase font-extrabold text-emerald-900 block mt-2">
-                    SỐ TIỀN ĐỀ NGHỊ KHO BẠC THANH TOÁN KỲ NÀY:
-                  </span>
-                  <span className="text-2xl font-black text-emerald-700 mt-1 block">
-                    {formatVND(netPayableAmount)}
-                  </span>
-                </div>
-
-                <div className="pt-3 border-t border-emerald-200/80 text-[11px] text-slate-600 space-y-0.5">
-                  <p>• Thanh toán thu hồi tạm ứng: <strong>{formatVND(advanceDeductedThisPeriod)}</strong></p>
-                  <p>• Thanh toán khối lượng hoàn thành: <strong>{formatVND(netPayableAmount)}</strong></p>
-                  <p className="italic text-slate-500 mt-1">
-                    (Kê khai chuẩn theo Phụ lục Mẫu 03.a/TT Nghị định 254/2025/NĐ-CP)
-                  </p>
-                </div>
-              </div>
+            <div className="space-y-1 bg-slate-50 p-3 rounded border border-slate-300">
+              <p>
+                <strong>6. Luỹ kế giá trị giải ngân:</strong> <span className="font-bold text-sm text-slate-900">{formatVND(grandTotalDisbursedCum)}</span>, trong đó:
+              </p>
+              <p className="pl-6">6.1. Tạm ứng: {formatVND(totalAdvanceDisbursedCum)}</p>
+              <p className="pl-6">6.2. Thanh toán khối lượng hoàn thành: {formatVND(totalCompletedDisbursedCum)}</p>
+              <p className="pl-10">- Thanh toán cho nhà thầu: {formatVND(Math.round(totalCompletedDisbursedCum * 0.95))}</p>
+              <p className="pl-10">- Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): {formatVND(Math.round(totalCompletedDisbursedCum * 0.05))}</p>
+              <p className="pl-10">- Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 ₫</p>
             </div>
           </div>
 
-          {/* Legal Signature Block */}
-          <div className="grid grid-cols-3 text-center text-xs pt-6 gap-4">
-            <div className="space-y-16">
+          {/* Exact Legal Signature Block */}
+          <div className="pt-8 grid grid-cols-2 text-center text-xs gap-8 font-['Times_New_Roman',serif]">
+            <div className="space-y-20">
               <div>
-                <p className="font-bold uppercase text-slate-800">ĐẠI DIỆN NHÀ THẦU</p>
-                <p className="italic text-slate-500 text-[11px]">(Ký, ghi rõ họ tên và đóng dấu)</p>
+                <p className="font-bold uppercase">ĐẠI DIỆN NHÀ THẦU (ĐƠN VỊ THỰC HIỆN)</p>
+                <p className="italic text-slate-500 text-[11px]">(Ký, ghi rõ họ tên, chức vụ, đóng dấu)</p>
               </div>
-              <p className="font-semibold text-slate-700">{contract?.contractor}</p>
+              <p className="font-bold uppercase text-slate-800">{contract?.contractor}</p>
             </div>
 
-            <div className="space-y-16">
+            <div className="space-y-20">
               <div>
-                <p className="font-bold uppercase text-slate-800">TƯ VẤN GIÁM SÁT TRƯỞNG</p>
+                <p className="italic text-slate-600 pb-1">
+                  ................., Ngày {new Date().getDate()} tháng {new Date().getMonth() + 1} năm {new Date().getFullYear()}
+                </p>
+                <p className="font-bold uppercase leading-snug">
+                  CHỦ ĐẦU TƯ/BAN QUẢN LÝ DỰ ÁN/<br />
+                  ĐƠN VỊ, TỔ CHỨC LÀM NHIỆM VỤ BỒI THƯỜNG, HỖ TRỢ TÁI ĐỊNH CƯ
+                </p>
                 <p className="italic text-slate-500 text-[11px]">(Ký, ghi rõ họ tên và đóng dấu)</p>
               </div>
-              <p className="font-semibold text-slate-700">Kỹ sư trưởng TVGS</p>
+              <p className="font-bold uppercase text-slate-800">{project?.owner}</p>
             </div>
+          </div>
 
-            <div className="space-y-16">
-              <div>
-                <p className="font-bold uppercase text-slate-800">ĐẠI DIỆN CHỦ ĐẦU TƯ / BAN QLDA</p>
-                <p className="italic text-slate-500 text-[11px]">(Ký, ghi rõ họ tên và đóng dấu)</p>
-              </div>
-              <p className="font-semibold text-slate-700">Giám đốc Ban QLDA</p>
-            </div>
+          {/* Footer Page */}
+          <div className="pt-6 text-center text-[11px] text-slate-400">
+            Trang 1
           </div>
 
         </div>

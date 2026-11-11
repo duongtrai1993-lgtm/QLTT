@@ -141,4 +141,61 @@ export function calculateContractStats(contract, payments = []) {
     workCompletedRate,
     pendingApprovalCount: contractPayments.filter(p => p.status === 'pending_approval' || p.status === 'under_review').length
   };
+}// Chuyển đổi số tiền thành chữ tiếng Việt chuẩn văn bản hành chính
+export function numberToVietnameseWords(amount) {
+  if (!amount || isNaN(amount) || amount === 0) return 'Không đồng';
+  const ChuSo = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+  const Tien = ['', ' nghìn', ' triệu', ' tỷ', ' nghìn tỷ', ' triệu tỷ'];
+
+  function docSo3ChuSo(baso) {
+    let tram = Math.floor(baso / 100);
+    let chuc = Math.floor((baso % 100) / 10);
+    let donvi = baso % 10;
+    let ketQua = '';
+
+    if (tram === 0 && chuc === 0 && donvi === 0) return '';
+    if (tram !== 0) {
+      ketQua += ChuSo[tram] + ' trăm ';
+      if (chuc === 0 && donvi !== 0) ketQua += 'lẻ ';
+    }
+    if (chuc !== 0 && chuc !== 1) {
+      ketQua += ChuSo[chuc] + ' mươi';
+      if (chuc === 0 && donvi !== 0) ketQua = ketQua + ' linh ';
+    }
+    if (chuc === 1) ketQua += 'mười';
+    switch (donvi) {
+      case 1:
+        if (chuc !== 0 && chuc !== 1) ketQua += ' mốt';
+        else ketQua += ' ' + ChuSo[donvi];
+        break;
+      case 5:
+        if (chuc === 0) ketQua += ' ' + ChuSo[donvi];
+        else ketQua += ' lăm';
+        break;
+      default:
+        if (donvi !== 0) ketQua += ' ' + ChuSo[donvi];
+        break;
+    }
+    return ketQua;
+  }
+
+  let so = Math.round(Math.abs(amount));
+  let viTri = [];
+  while (so > 0) {
+    viTri.push(so % 1000);
+    so = Math.floor(so / 1000);
+  }
+
+  let chuoi = '';
+  for (let i = viTri.length - 1; i >= 0; i--) {
+    let doc = docSo3ChuSo(viTri[i]);
+    if (doc !== '') {
+      chuoi += doc + Tien[i] + ' ';
+    }
+  }
+
+  chuoi = chuoi.trim();
+  if (!chuoi) return 'Không đồng';
+  chuoi = chuoi.charAt(0).toUpperCase() + chuoi.slice(1) + ' đồng chẵn.';
+  return chuoi;
 }

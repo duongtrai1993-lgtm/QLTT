@@ -1,15 +1,15 @@
-﻿import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx';
 import { formatVND, formatNumber, formatDate } from './storageService';
 
 export const exportService = {
-  // Xuất Bảng xác định giá trị khối lượng hoàn thành Mẫu 03a ra Excel
+  // Xuất Bảng xác định giá trị khối lượng hoàn thành Mẫu 03.a/TT theo Nghị định số 254/2025/NĐ-CP
   exportForm03aExcel(project, contract, payment, items = []) {
     const wb = XLSX.utils.book_new();
 
     const headers = [
       ["BẢNG XÁC ĐỊNH GIÁ TRỊ KHỐI LƯỢNG CÔNG VIỆC HOÀN THÀNH"],
-      ["Theo Nghị định số 99/2021/NĐ-CP ngày 11/11/2021 của Chính phủ"],
-      ["MẪU SỐ 03a"],
+      ["MẪU SỐ 03.a/TT"],
+      ["Ban hành kèm theo Nghị định số 254/2025/NĐ-CP ngày 26/09/2025 của Chính phủ"],
       [],
       [`Tên dự án: ${project?.name || ''}`],
       [`Gói thầu: ${contract?.packageName || ''}`],
@@ -73,14 +73,16 @@ export const exportService = {
 
     const summaryRows = [
       [],
-      ["TỔNG HỢP GIÁ TRỊ ĐỀ NGHỊ THANH TOÁN KỲ NÀY:"],
-      ["1. Giá trị khối lượng hoàn thành kỳ này:", totalThis],
-      ["2. Khấu trừ thu hồi tạm ứng:", payment?.advanceDeduction || 0],
-      ["3. Khấu trừ giữ lại bảo hành (5%):", payment?.retentionDeduction || 0],
-      ["4. Khấu trừ vi phạm / khác:", payment?.penaltyDeduction || 0],
-      ["5. SỐ TIỀN ĐỀ NGHỊ THANH TOÁN KỲ NÀY (1 - 2 - 3 - 4):", payment?.requestedAmount || 0],
+      ["TỔNG HỢP CÁC CHỈ TIÊU THANH TOÁN (THEO NGHỊ ĐỊNH SỐ 254/2025/NĐ-CP):"],
+      ["I. Lũy kế giá trị khối lượng thực hiện đến hết kỳ này:", totalCum],
+      ["   1. Lũy kế đến hết kỳ trước:", totalPrev],
+      ["   2. Giá trị khối lượng hoàn thành kỳ này:", totalThis],
+      ["II. Khấu trừ thu hồi tạm ứng kỳ này:", payment?.advanceDeduction || 0],
+      ["III. Khấu trừ giữ lại bảo hành (5%):", payment?.retentionDeduction || 0],
+      ["IV. Khấu trừ khác (nếu có):", payment?.penaltyDeduction || 0],
+      ["V. SỐ TIỀN ĐỀ NGHỊ KHO BẠC THANH TOÁN KỲ NÀY:", payment?.requestedAmount || (totalThis - (payment?.advanceDeduction || 0) - (payment?.retentionDeduction || 0) - (payment?.penaltyDeduction || 0))],
       [],
-      ["ĐẠI DIỆN NHÀ THẦU", "", "", "TƯ VẤN GIÁM SÁT", "", "", "ĐẠI DIỆN CHỦ ĐẦU TƯ"],
+      ["ĐẠI DIỆN NHÀ THẦU", "", "", "TƯ VẤN GIÁM SÁT TRƯỞNG", "", "", "ĐẠI DIỆN CHỦ ĐẦU TƯ / BAN QLDA"],
       ["(Ký, ghi rõ họ tên và đóng dấu)", "", "", "(Ký, ghi rõ họ tên và đóng dấu)", "", "", "(Ký, ghi rõ họ tên và đóng dấu)"]
     ];
 
@@ -104,16 +106,17 @@ export const exportService = {
       { wch: 24 }  // Lũy kế Tiền
     ];
 
-    XLSX.utils.book_append_sheet(wb, ws, "Mau_03a");
+    XLSX.utils.book_append_sheet(wb, ws, "Mau_03a_TT_ND254");
 
-    const fileName = `Mau_03a_${contract?.code || 'HD'}_Dot_${payment?.stageNumber || 1}.xlsx`;
+    const fileName = `Mau_03a_TT_ND254_${contract?.code || 'HD'}_Dot_${payment?.stageNumber || 1}.xlsx`;
     XLSX.writeFile(wb, fileName);
   },
 
   // Sao lưu toàn bộ dữ liệu ra file JSON
   exportBackupJSON(projects, contracts, payments, documents) {
     const backupData = {
-      version: '1.0',
+      version: '2.0',
+      legalFramework: 'Nghị định 254/2025/NĐ-CP',
       exportedAt: new Date().toISOString(),
       projects,
       contracts,
@@ -124,7 +127,7 @@ export const exportService = {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `QLTT_Backup_${new Date().toISOString().slice(0, 10)}.json`);
+    downloadAnchor.setAttribute("download", `QLTT_Backup_ND254_${new Date().toISOString().slice(0, 10)}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calculator, Calendar, DollarSign, FileCheck } from 'lucide-react';
 import { formatVND } from '../services/storageService';
 
@@ -33,7 +33,7 @@ export function PaymentModal({ isOpen, onClose, onSave, contracts = [], projects
         setTitle(`Thanh toán Đợt ${stageNumber}: Tạm ứng hợp đồng (${selectedContract.advanceRate || 20}%)`);
       }
     } else {
-      // For progress payment, auto calculate 20% advance recovery and 5% retention
+      // For progress payment under ND 254/2025, auto calculate 20% advance recovery and 5% retention
       const workVal = Number(workCompletedValue) || 0;
       const advRec = Math.round(workVal * 0.2); // 20%
       const retVal = Math.round(workVal * ((selectedContract?.retentionRate || 5) / 100)); // 5%
@@ -93,7 +93,7 @@ export function PaymentModal({ isOpen, onClose, onSave, contracts = [], projects
               {editingPayment ? 'Chỉnh Sửa Hồ Sơ Thanh Toán' : 'Lập Đợt Đề Nghị Thanh Toán Mới'}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Hệ thống tự động tính toán mức thu hồi tạm ứng & khấu trừ bảo hành theo quy định
+              Áp dụng mẫu biểu Mẫu 03.a/TT theo Nghị định số 254/2025/NĐ-CP của Chính phủ
             </p>
           </div>
           <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 transition">
@@ -128,7 +128,7 @@ export function PaymentModal({ isOpen, onClose, onSave, contracts = [], projects
                 onChange={(e) => setPaymentType(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-semibold text-blue-800 bg-blue-50/50"
               >
-                <option value="progress">Khối lượng hoàn thành (Mẫu số 03a)</option>
+                <option value="progress">Khối lượng hoàn thành (Mẫu số 03.a/TT - NĐ 254/2025)</option>
                 <option value="advance">Tạm ứng hợp đồng</option>
                 <option value="final">Quyết toán hoàn thành (A-B)</option>
               </select>
@@ -190,11 +190,11 @@ export function PaymentModal({ isOpen, onClose, onSave, contracts = [], projects
             </div>
           </div>
 
-          {/* Tài chính & Tính toán tự động */}
+          {/* Tài chính & Tính toán tự động theo NĐ 254/2025/NĐ-CP */}
           <div className="bg-blue-50/60 p-4 rounded-xl border border-blue-200 space-y-3">
             <h4 className="font-bold text-blue-900 uppercase tracking-wide flex items-center gap-1.5">
               <Calculator className="w-4 h-4 text-blue-700" />
-              Bảng Tính Tự Động Giá Trị Thanh Toán (VNĐ)
+              Bảng Tính Giá Trị Thanh Toán Theo NĐ 254/2025/NĐ-CP (VNĐ)
             </h4>
 
             <div className="grid grid-cols-2 gap-3">
@@ -214,7 +214,7 @@ export function PaymentModal({ isOpen, onClose, onSave, contracts = [], projects
 
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">
-                  2. Khấu trừ thu hồi tạm ứng (VNĐ)
+                  2. Khấu trừ thu hồi tạm ứng kỳ này (VNĐ)
                 </label>
                 <input
                   type="number"
@@ -258,7 +258,7 @@ export function PaymentModal({ isOpen, onClose, onSave, contracts = [], projects
             <div className="bg-white p-3.5 rounded-lg border border-blue-300 flex items-center justify-between">
               <div>
                 <span className="text-xs uppercase font-extrabold text-blue-900 block">
-                  Số Tiền Thực Thanh Toán Cho Nhà Thầu:
+                  Số Tiền Đề Nghị Kho Bạc Thanh Toán Kỳ Này:
                 </span>
                 <span className="text-[10px] text-slate-500">
                   Công thức: (1) - (2) - (3) - (4)

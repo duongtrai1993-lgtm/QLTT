@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Search, Plus, Download, RotateCcw, Building } from 'lucide-react';
 
 export function Navbar({
@@ -21,11 +21,16 @@ export function Navbar({
             <span className="font-black text-sm tracking-tighter">QLTT</span>
           </div>
           <div>
-            <h1 className="font-extrabold text-slate-900 text-sm md:text-base leading-tight tracking-tight">
-              Quản Lý Hồ Sơ Thanh Toán Dự Án
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-extrabold text-slate-900 text-sm md:text-base leading-tight tracking-tight">
+                Quản Lý Hồ Sơ Thanh Toán Dự Án
+              </h1>
+              <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                NĐ 254/2025/NĐ-CP
+              </span>
+            </div>
             <p className="text-[11px] text-slate-500 font-medium hidden sm:block">
-              Chuẩn Nghị định 99/2021/NĐ-CP & Thông tư 96/2021/TT-BTC
+              Chuẩn Nghị định 254/2025/NĐ-CP & Mẫu số 03.a/TT
             </p>
           </div>
         </div>

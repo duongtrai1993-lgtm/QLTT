@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, CheckCircle2, Clock, AlertTriangle, FileText, ArrowRight, Printer, Trash2 } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 import { formatVND, formatDate } from '../services/storageService';
@@ -68,9 +68,14 @@ export function PaymentDetailDrawer({
           {/* Card Tài chính đợt thanh toán */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
-              <span className="text-xs font-medium text-slate-300 uppercase tracking-wider">
-                Số Tiền Đề Nghị Thanh Toán Kỳ Này
-              </span>
+              <div>
+                <span className="text-xs font-medium text-slate-300 uppercase tracking-wider block">
+                  Số Tiền Đề Nghị Thanh Toán Kỳ Này
+                </span>
+                <span className="text-[10px] text-emerald-300">
+                  Chuẩn Nghị định 254/2025/NĐ-CP
+                </span>
+              </div>
               <span className="text-2xl font-black text-emerald-400">
                 {formatVND(payment.requestedAmount)}
               </span>
@@ -101,7 +106,7 @@ export function PaymentDetailDrawer({
                 className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-xs flex items-center justify-center gap-2 shadow-sm transition"
               >
                 <FileText className="w-4 h-4" />
-                Xem Bảng Xác Định Khối Lượng (Mẫu số 03a)
+                Xem Bảng Xác Định Khối Lượng (Mẫu số 03.a/TT - NĐ 254/2025)
               </button>
             </div>
           </div>
@@ -184,7 +189,7 @@ export function PaymentDetailDrawer({
             </div>
           </div>
 
-          {/* 8-Point Legal Document Checklist */}
+          {/* Legal Document Checklist theo ND 254/2025/ND-CP */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
@@ -192,7 +197,7 @@ export function PaymentDetailDrawer({
                   Danh Mục Hồ Sơ & Chứng Từ Pháp Lý Bắt Buộc
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Kiểm soát theo Thông tư 96/2021/TT-BTC & Nghị định 99/2021/NĐ-CP
+                  Kiểm soát theo Nghị định số 254/2025/NĐ-CP của Chính phủ
                 </p>
               </div>
 

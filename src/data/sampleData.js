@@ -253,7 +253,7 @@ export const INITIAL_PAYMENTS = [
 
 export const INITIAL_CHECKLIST_TEMPLATE = [
   { id: "chk-1", name: "Giấy đề nghị thanh toán vốn đầu tư (Mẫu 04a/TT 96/2021/TT-BTC)", required: true },
-  { id: "chk-2", name: "Bảng xác định giá trị khối lượng công việc hoàn thành (Mẫu 03a/NĐ 99/2021/NĐ-CP)", required: true },
+  { id: "chk-2", name: "Bảng xác định giá trị khối lượng công việc hoàn thành (Mẫu số 03.a/TT - Nghị định 254/2025/NĐ-CP)", required: true },
   { id: "chk-3", name: "Biên bản nghiệm thu công việc / giai đoạn hoàn thành có chữ ký A-B-TVGS", required: true },
   { id: "chk-4", name: "Hóa đơn Giá trị gia tăng (VAT) điện tử hợp lệ của Nhà thầu", required: true },
   { id: "chk-5", name: "Bảng tính chi tiết khối lượng nghiệm thu A-B và hồ sơ chất lượng đi kèm", required: true },

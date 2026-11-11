@@ -91,7 +91,7 @@ export function PaymentsView({
         >
           <option value="all">Tất cả loại thanh toán</option>
           <option value="advance">Tạm ứng hợp đồng</option>
-          <option value="progress">Khối lượng Mẫu 03a</option>
+          <option value="progress">Khối lượng Mẫu 03.a/TT (NĐ 254/2025)</option>
           <option value="final">Quyết toán A-B</option>
         </select>
 

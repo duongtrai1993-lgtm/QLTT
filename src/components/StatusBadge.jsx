@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 export function StatusBadge({ status, type = 'payment' }) {
   if (type === 'payment') {
@@ -25,7 +25,7 @@ export function StatusBadge({ status, type = 'payment' }) {
       case 'advance':
         return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">Tạm ứng HĐ</span>;
       case 'progress':
-        return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Khối lượng Mẫu 03a</span>;
+        return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Khối lượng Mẫu 03.a/TT</span>;
       case 'final':
         return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">Quyết toán A-B</span>;
       default:

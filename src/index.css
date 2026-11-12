@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -8,23 +8,10 @@
   }
 }
 
-/* Print styles specifically for Mau 03a and Payment requests */
+/* Base print styles */
 @media print {
-  body * {
-    visibility: hidden;
-  }
-  #printable-form-03a, #printable-form-03a * {
-    visibility: visible;
-  }
-  #printable-form-03a {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 10mm;
+  body {
     background: white !important;
-    color: black !important;
   }
   .no-print {
     display: none !important;

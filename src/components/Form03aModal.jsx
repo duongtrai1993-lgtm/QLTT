@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, Printer, FileSpreadsheet } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Printer, FileSpreadsheet, Sliders, Check, HelpCircle, ZoomIn, ZoomOut } from 'lucide-react';
 import { formatVND, formatNumber, formatDate, numberToVietnameseWords } from '../services/storageService';
 import { exportService } from '../services/exportService';
 import { SAMPLE_FORM_03A_SECTIONS } from '../data/sampleData';
@@ -7,9 +7,15 @@ import { SAMPLE_FORM_03A_SECTIONS } from '../data/sampleData';
 export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
   if (!isOpen || !payment) return null;
 
-  const sections = SAMPLE_FORM_03A_SECTIONS;
+  // Print customization states
+  const [paperSize, setPaperSize] = useState('a4'); // 'a4' | 'a3'
+  const [orientation, setOrientation] = useState('landscape'); // 'landscape' | 'portrait'
+  const [marginSize, setMarginSize] = useState('5mm'); // '5mm' (hẹp), '10mm' (vừa), '15mm' (chuẩn)
+  const [fontSize, setFontSize] = useState('8.5pt'); // '8pt' | '8.5pt' | '9.5pt' | '10.5pt'
+  const [scalePercent, setScalePercent] = useState(100); // 70%, 80%, 90%, 100%
+  const [showConfig, setShowConfig] = useState(true);
 
-  // Flatten all items for total calculation
+  const sections = SAMPLE_FORM_03A_SECTIONS;
   const allItems = sections.flatMap(s => s.items);
 
   const totalContractVal = allItems.reduce((s, i) => s + (Number(i.contractVal) || 0), 0);
@@ -63,10 +69,65 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-[95vw] w-full max-h-[96vh] flex flex-col border border-slate-300">
+      
+      {/* Dynamic CSS injected specifically for print adjustment */}
+      <style>{`
+        @page {
+          size: ${paperSize.toUpperCase()} ${orientation};
+          margin: ${marginSize};
+        }
+        @media print {
+          html, body {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          body * {
+            visibility: hidden;
+          }
+          #printable-form-03a, #printable-form-03a * {
+            visibility: visible;
+          }
+          #printable-form-03a {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            color: black !important;
+            font-size: ${fontSize} !important;
+            line-height: 1.25 !important;
+            transform: scale(${scalePercent / 100});
+            transform-origin: top left;
+          }
+          .print-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+          }
+          .print-table thead {
+            display: table-header-group !important;
+          }
+          .print-table tr {
+            page-break-inside: avoid !important;
+          }
+          .signature-block, .summary-block {
+            page-break-inside: avoid !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      <div className="bg-white rounded-xl shadow-2xl max-w-[97vw] w-full max-h-[96vh] flex flex-col border border-slate-300">
         
         {/* Header no-print */}
-        <div className="px-6 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50 rounded-t-xl no-print">
+        <div className="px-6 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50 rounded-t-xl no-print">
           <div>
             <div className="flex items-center gap-2">
               <span className="p-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm">📋</span>
@@ -78,27 +139,39 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Căn cứ theo Nghị định số 254/2025/NĐ-CP ngày 26/9/2025 của Chính Phủ - Phụ lục 03.a/TT
+              Tùy chỉnh khổ giấy in ấn & xuất PDF chuẩn hóa trang tài liệu
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowConfig(!showConfig)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg border flex items-center gap-1.5 transition ${
+                showConfig ? 'bg-blue-50 text-blue-700 border-blue-300' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>{showConfig ? 'Ẩn cài đặt in' : 'Căn chỉnh trang in'}</span>
+            </button>
+
+            <button
               onClick={handleExportExcel}
-              className="px-3.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg flex items-center gap-1.5 transition shadow-sm"
+              className="px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg flex items-center gap-1.5 transition shadow-sm"
               title="Xuất Excel theo đúng 19 cột chuẩn NĐ 254/2025"
             >
               <FileSpreadsheet className="w-4 h-4" />
               Xuất Excel (.xlsx)
             </button>
+
             <button
               onClick={handlePrint}
-              className="px-3.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-lg flex items-center gap-1.5 transition shadow-sm"
-              title="In ra giấy hoặc lưu thành file PDF chuẩn A4"
+              className="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-1.5 transition shadow-sm"
+              title="In ra giấy hoặc lưu thành file PDF"
             >
               <Printer className="w-4 h-4" />
               In / Xuất PDF
             </button>
+
             <button
               onClick={onClose}
               className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 transition"
@@ -108,8 +181,134 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
           </div>
         </div>
 
+        {/* Print Configuration Toolbar (collapsible) */}
+        {showConfig && (
+          <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 px-6 py-3 border-b border-blue-100 no-print text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              
+              <div className="flex flex-wrap items-center gap-5">
+                {/* 1. Hướng giấy */}
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-slate-700">Hướng in:</span>
+                  <div className="inline-flex rounded-lg border border-slate-300 p-0.5 bg-white shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setOrientation('landscape')}
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition ${
+                        orientation === 'landscape' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Khổ Ngang (Khuyên dùng)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOrientation('portrait')}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
+                        orientation === 'portrait' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Khổ Đứng
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Khổ giấy */}
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-slate-700">Khổ giấy:</span>
+                  <div className="inline-flex rounded-lg border border-slate-300 p-0.5 bg-white shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setPaperSize('a4')}
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition ${
+                        paperSize === 'a4' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      A4 (Chuẩn)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaperSize('a3')}
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition ${
+                        paperSize === 'a3' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      A3 (Rộng rãi)
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Căn lề giấy */}
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-slate-700">Căn lề:</span>
+                  <select
+                    value={marginSize}
+                    onChange={(e) => setMarginSize(e.target.value)}
+                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="4mm">Siêu hẹp (4mm - Tối đa diện tích)</option>
+                    <option value="6mm">Hẹp (6mm - Cân đối)</option>
+                    <option value="10mm">Vừa (10mm)</option>
+                    <option value="15mm">Chuẩn (15mm)</option>
+                  </select>
+                </div>
+
+                {/* 4. Cỡ chữ bảng in */}
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-slate-700">Cỡ chữ bảng:</span>
+                  <select
+                    value={fontSize}
+                    onChange={(e) => setFontSize(e.target.value)}
+                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="7.5pt">Rất nhỏ (7.5pt)</option>
+                    <option value="8.5pt">Nhỏ gọn (8.5pt - Khuyên dùng A4)</option>
+                    <option value="9.5pt">Tiêu chuẩn (9.5pt)</option>
+                    <option value="10.5pt">Lớn (10.5pt - Khuyên dùng A3)</option>
+                  </select>
+                </div>
+
+                {/* 5. Tỷ lệ thu phóng */}
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-slate-700">Tỷ lệ:</span>
+                  <div className="inline-flex rounded-lg border border-slate-300 p-0.5 bg-white shadow-sm">
+                    {[100, 90, 80, 75].map(pct => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => setScalePercent(pct)}
+                        className={`px-2 py-1 rounded-md text-xs font-bold transition ${
+                          scalePercent === pct ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              <div className="text-[11px] text-blue-800 bg-blue-100/70 px-3 py-1.5 rounded-lg border border-blue-200/80 flex items-center gap-1.5">
+                <HelpCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>
+                  Đã cấu hình: <strong>{paperSize.toUpperCase()} {orientation === 'landscape' ? 'Ngang' : 'Đứng'}</strong>, lề <strong>{marginSize}</strong>, chữ <strong>{fontSize}</strong>. Bảng 19 cột sẽ tự động dàn đều không bị tràn trang.
+                </span>
+              </div>
+
+            </div>
+          </div>
+        )}
+
         {/* Printable Paper Area */}
-        <div className="overflow-y-auto p-4 md:p-8 space-y-4 text-slate-900 bg-white text-xs font-['Times_New_Roman',serif]" id="printable-form-03a">
+        <div
+          className="overflow-y-auto p-4 md:p-8 space-y-4 text-slate-900 bg-white text-xs font-['Times_New_Roman',serif] transition-all"
+          id="printable-form-03a"
+          style={{
+            fontSize: fontSize,
+            transform: scalePercent !== 100 ? `scale(${scalePercent / 100})` : undefined,
+            transformOrigin: 'top center'
+          }}
+        >
           
           {/* Header Title theo mẫu chính xác */}
           <div className="text-center space-y-1">
@@ -141,7 +340,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
 
           {/* 19-Column Table */}
           <div className="overflow-x-auto border border-black pt-1">
-            <table className="w-full text-[10px] border-collapse border border-black font-['Times_New_Roman',serif]">
+            <table className="w-full text-[10px] border-collapse border border-black font-['Times_New_Roman',serif] print-table">
               <thead className="bg-slate-100 text-center font-bold">
                 <tr>
                   <th rowSpan="2" className="border border-black px-1 py-1 w-6">STT</th>
@@ -236,7 +435,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
           </div>
 
           {/* 6 Mục Tổng Hợp Số Liệu Chuẩn Theo Phụ Lục 03.a/TT */}
-          <div className="space-y-1.5 pt-3 text-xs border-t border-slate-300">
+          <div className="space-y-1.5 pt-3 text-xs border-t border-slate-300 summary-block">
             <p>
               <strong>1. Giá trị tạm ứng còn lại chưa thu hồi đến hết kỳ trước:</strong> {formatVND(advanceRemainingPrev)}
             </p>
@@ -286,7 +485,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
           </div>
 
           {/* Exact Legal Signature Block */}
-          <div className="pt-8 grid grid-cols-2 text-center text-xs gap-8 font-['Times_New_Roman',serif]">
+          <div className="pt-8 grid grid-cols-2 text-center text-xs gap-8 font-['Times_New_Roman',serif] signature-block">
             <div className="space-y-20">
               <div>
                 <p className="font-bold uppercase">ĐẠI DIỆN NHÀ THẦU (ĐƠN VỊ THỰC HIỆN)</p>
@@ -311,7 +510,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
           </div>
 
           {/* Footer Page */}
-          <div className="pt-6 text-center text-[11px] text-slate-400">
+          <div className="pt-6 text-center text-[11px] text-slate-400 no-print">
             Trang 1
           </div>
 

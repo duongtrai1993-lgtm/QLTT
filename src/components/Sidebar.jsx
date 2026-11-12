@@ -1,8 +1,10 @@
 ﻿import React from 'react';
-import { LayoutDashboard, Building2, FileSignature, Receipt, ShieldAlert, TableProperties } from 'lucide-react';
+import { LayoutDashboard, Building2, FileSignature, Receipt, ShieldAlert, TableProperties, PanelLeftClose } from 'lucide-react';
 import { formatBillion } from '../services/storageService';
 
-export function Sidebar({ currentTab, onTabChange, stats }) {
+export function Sidebar({ currentTab, onTabChange, stats, isOpen = true, onToggle }) {
+  if (!isOpen) return null;
+
   const navItems = [
     { id: 'dashboard', label: 'Tổng Quan & Báo Cáo', icon: LayoutDashboard },
     { id: 'quantities', label: 'Nhập Khối Lượng', icon: TableProperties, badge: 'Mẫu 03.a', badgeColor: 'bg-blue-600 text-white' },
@@ -13,13 +15,24 @@ export function Sidebar({ currentTab, onTabChange, stats }) {
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 no-print border-r border-slate-800">
+    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 no-print border-r border-slate-800 transition-all duration-300">
       
       {/* Navigation links */}
       <div className="p-3 space-y-1">
-        <p className="px-3 pt-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-          Phân Hệ Quản Lý
-        </p>
+        <div className="flex items-center justify-between px-3 pt-2 pb-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Phân Hệ Quản Lý
+          </p>
+          {onToggle && (
+            <button
+              onClick={onToggle}
+              className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
+              title="Ẩn cột quản lý (Mở rộng bảng tính 100%)"
+            >
+              <PanelLeftClose className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
 
         {navItems.map((item) => {
           const Icon = item.icon;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, Plus, Check, RotateCcw, Calculator, Printer, FileSpreadsheet, 
-  ArrowRight, Sparkles, Filter, ChevronRight, CheckCircle2, AlertCircle, Save
+  ArrowRight, Sparkles, Filter, ChevronRight, CheckCircle2, AlertCircle, Save,
+  PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { storageService, formatVND, formatNumber, formatDate, numberToVietnameseWords } from '../services/storageService';
 import { exportService } from '../services/exportService';
@@ -15,7 +16,9 @@ export function QuantitiesView({
   onSavePaymentData,
   onOpenForm03a,
   onOpenNewPayment,
-  onManageWorkItems
+  onManageWorkItems,
+  isSidebarOpen = false,
+  onToggleSidebar
 }) {
   // Chọn hợp đồng và đợt thanh toán
   const [selectedContractId, setSelectedContractId] = useState(contracts[0]?.id || '');
@@ -319,6 +322,21 @@ export function QuantitiesView({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {onToggleSidebar && (
+            <button
+              onClick={onToggleSidebar}
+              className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition ${
+                !isSidebarOpen
+                  ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 shadow-xs'
+                  : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+              }`}
+              title={isSidebarOpen ? "Ẩn cột quản lý bên trái để mở rộng 100% bảng tính" : "Hiện lại cột quản lý bên trái"}
+            >
+              {isSidebarOpen ? <PanelLeftClose className="w-4 h-4 text-slate-600" /> : <PanelLeftOpen className="w-4 h-4 text-blue-600" />}
+              <span>{isSidebarOpen ? 'Ẩn Cột Quản Lý' : 'Hiện Cột Quản Lý'}</span>
+            </button>
+          )}
+
           <button
             onClick={handleSaveData}
             className="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition"

@@ -46,10 +46,6 @@ export default function App() {
   const [editingContract, setEditingContract] = useState(null);
   const [selectedContractForWorkItems, setSelectedContractForWorkItems] = useState(null);
 
-  // Quản lý ẩn/hiện cột quản lý bên trái (Sidebar)
-  // Mặc định ẩn khi vào trang nhập khối lượng hoặc có thể bật tắt tự do theo nhu cầu
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   // Load initial data
   useEffect(() => {
     setProjects(storageService.getProjects());
@@ -209,7 +205,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       
-      {/* Top Navbar & Thanh Tác Vụ Điều Hướng Phân Hệ */}
+      {/* Top Navbar */}
       <Navbar
         projects={projects}
         selectedProjectId={selectedProjectId}
@@ -219,37 +215,20 @@ export default function App() {
         onOpenNewPayment={() => { setEditingPayment(null); setIsPaymentModalOpen(true); }}
         onExportBackup={handleExportBackup}
         onResetData={handleResetData}
-        currentTab={currentTab}
-        onTabChange={(tabId) => {
-          setCurrentTab(tabId);
-          if (tabId === 'quantities') {
-            setIsSidebarOpen(false); // Tự động ẩn cột quản lý khi vào trang nhập khối lượng để có không gian tối đa
-          }
-        }}
-        isSidebarOpen={isSidebarOpen}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        sidebarStats={sidebarStats}
       />
 
       {/* Main Workspace */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* Sidebar (Cột quản lý) */}
+        {/* Sidebar (Cột quản lý luôn cố định bên trái) */}
         <Sidebar
           currentTab={currentTab}
-          onTabChange={(tabId) => {
-            setCurrentTab(tabId);
-            if (tabId === 'quantities') {
-              setIsSidebarOpen(false);
-            }
-          }}
+          onTabChange={setCurrentTab}
           stats={sidebarStats}
-          isOpen={isSidebarOpen}
-          onToggle={() => setIsSidebarOpen(false)}
         />
 
         {/* Content Pane */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           
           {currentTab === 'dashboard' && (
             <DashboardView
@@ -272,8 +251,7 @@ export default function App() {
               onOpenForm03a={(p) => setSelectedPaymentForForm03a(p)}
               onOpenNewPayment={() => { setEditingPayment(null); setIsPaymentModalOpen(true); }}
               onManageWorkItems={(c) => setSelectedContractForWorkItems(c)}
-              isSidebarOpen={isSidebarOpen}
-              onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+              onBackToPayments={() => setCurrentTab('payments')}
             />
           )}
 

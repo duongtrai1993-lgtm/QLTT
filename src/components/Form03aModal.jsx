@@ -11,7 +11,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
   const [paperSize, setPaperSize] = useState('a4'); // 'a4' | 'a3'
   const [orientation, setOrientation] = useState('landscape'); // 'landscape' | 'portrait'
   const [marginSize, setMarginSize] = useState('4mm'); // '3mm', '4mm', '5mm', '8mm', '10mm'
-  const [fontSize, setFontSize] = useState('7pt'); // '6.5pt', '7pt', '7.5pt', '8pt', '8.5pt', '9pt'
+  const [fontSize, setFontSize] = useState('6.8pt'); // '6.5pt', '6.8pt', '7pt', '7.5pt', '8pt', '8.5pt', '9pt'
   const [zoomLevel, setZoomLevel] = useState(100); // 75, 90, 100, 110, 125 (%)
   const [breakSummaryPage, setBreakSummaryPage] = useState(false);
   const [showConfig, setShowConfig] = useState(true);
@@ -22,17 +22,17 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
       setPaperSize('a4');
       setOrientation('landscape');
       setMarginSize('4mm');
-      setFontSize('7pt');
+      setFontSize('6.8pt');
     } else if (preset === 'a3-landscape') {
       setPaperSize('a3');
       setOrientation('landscape');
-      setMarginSize('8mm');
-      setFontSize('9pt');
+      setMarginSize('6mm');
+      setFontSize('8.5pt');
     } else if (preset === 'a4-portrait') {
       setPaperSize('a4');
       setOrientation('portrait');
       setMarginSize('3mm');
-      setFontSize('6.5pt');
+      setFontSize('6.2pt');
     }
   };
 
@@ -91,16 +91,15 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
   // Tính chiều rộng trang xem thử trên màn hình
   const getPaperWidthPx = () => {
     if (orientation === 'landscape') {
-      return paperSize === 'a3' ? 1580 : 1180;
+      return paperSize === 'a3' ? 1580 : 1200;
     }
-    return paperSize === 'a3' ? 1120 : 840;
+    return paperSize === 'a3' ? 1120 : 860;
   };
 
   return (
     <div
       id="form-03a-modal-container"
-      className="fixed inset-0 z-[100] overflow-hidden bg-slate-950/95 flex flex-col justify-between"
-      style={{ backdropFilter: 'blur(8px)' }}
+      className="fixed inset-0 z-[100] overflow-hidden bg-slate-950 flex flex-col justify-between"
     >
       
       {/* Dynamic CSS injected for exact print layout & multi-page pagination */}
@@ -164,10 +163,11 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
             color: #000000 !important;
             display: block !important;
             font-size: ${fontSize} !important;
-            line-height: 1.25 !important;
+            line-height: 1.2 !important;
             box-shadow: none !important;
             border: none !important;
             transform: none !important;
+            font-family: 'Times New Roman', Times, serif !important;
           }
 
           /* 5. Fixed-layout 100% width table guarantees zero right-edge clipping */
@@ -176,6 +176,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
             border-collapse: collapse !important;
             table-layout: fixed !important;
             page-break-inside: auto !important;
+            font-family: 'Times New Roman', Times, serif !important;
           }
           
           .print-table thead {
@@ -196,7 +197,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
           .print-table th {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            word-break: normal !important;
+            word-break: break-word !important;
             overflow: hidden !important;
           }
 
@@ -497,26 +498,26 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
               }}
             >
               <colgroup>
-                <col style={{ width: '2.5%' }} />  {/* 1. STT */}
-                <col style={{ width: '4.5%' }} />  {/* 2. Mã hiệu CV */}
-                <col style={{ width: '16.5%' }} /> {/* 3. Chỉ tiêu */}
-                <col style={{ width: '2.8%' }} />  {/* 4. ĐVT */}
-                <col style={{ width: '4.5%' }} />  {/* 5. KL HĐ */}
-                <col style={{ width: '4.0%' }} />  {/* 6. KL chưa TT trước */}
-                <col style={{ width: '4.4%' }} />  {/* 7. KL đã TT trước */}
-                <col style={{ width: '4.5%' }} />  {/* 8. KL nghiệm thu kỳ này */}
-                <col style={{ width: '4.8%' }} />  {/* 9. KL lũy kế */}
-                <col style={{ width: '4.5%' }} />  {/* 10. KL đề nghị TT */}
-                <col style={{ width: '5.5%' }} />  {/* 11. Đơn giá HĐ */}
-                <col style={{ width: '3.8%' }} />  {/* 12. Đơn giá BS */}
+                <col style={{ width: '2.2%' }} />  {/* 1. STT */}
+                <col style={{ width: '4.2%' }} />  {/* 2. Mã hiệu CV */}
+                <col style={{ width: '15.0%' }} /> {/* 3. Chỉ tiêu */}
+                <col style={{ width: '2.6%' }} />  {/* 4. ĐVT */}
+                <col style={{ width: '4.2%' }} />  {/* 5. KL HĐ */}
+                <col style={{ width: '3.8%' }} />  {/* 6. KL chưa TT trước */}
+                <col style={{ width: '4.0%' }} />  {/* 7. KL đã TT trước */}
+                <col style={{ width: '4.2%' }} />  {/* 8. KL nghiệm thu kỳ này */}
+                <col style={{ width: '4.4%' }} />  {/* 9. KL lũy kế */}
+                <col style={{ width: '4.2%' }} />  {/* 10. KL đề nghị TT */}
+                <col style={{ width: '5.2%' }} />  {/* 11. Đơn giá HĐ */}
+                <col style={{ width: '3.5%' }} />  {/* 12. Đơn giá BS */}
                 <col style={{ width: '6.8%' }} />  {/* 13. Giá trị HĐ */}
-                <col style={{ width: '4.2%' }} />  {/* 14. Giá trị chưa TT trước */}
-                <col style={{ width: '6.0%' }} />  {/* 15. Giá trị NT kỳ này */}
-                <col style={{ width: '6.0%' }} />  {/* 16. Giá trị đề nghị TT */}
-                <col style={{ width: '4.2%' }} />  {/* 17. Giá trị chưa TT nay */}
-                <col style={{ width: '6.0%' }} />  {/* 18. Lũy kế đã TT trước */}
+                <col style={{ width: '4.0%' }} />  {/* 14. Giá trị chưa TT trước */}
+                <col style={{ width: '6.2%' }} />  {/* 15. Giá trị NT kỳ này */}
+                <col style={{ width: '6.2%' }} />  {/* 16. Giá trị đề nghị TT */}
+                <col style={{ width: '4.0%' }} />  {/* 17. Giá trị chưa TT nay */}
+                <col style={{ width: '6.2%' }} />  {/* 18. Lũy kế đã TT trước */}
                 <col style={{ width: '6.5%' }} />  {/* 19. Lũy kế đã TT nay */}
-                <col style={{ width: '3.2%' }} />  {/* 20. Ghi chú */}
+                <col style={{ width: '3.8%' }} />  {/* 20. Ghi chú */}
               </colgroup>
 
               <thead className="text-center font-bold text-black bg-white">
@@ -588,24 +589,24 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
                     {section.items.map((row, rIdx) => (
                       <tr key={rIdx} className="hover:bg-slate-50">
                         <td className="border border-black px-0.5 py-0.5 text-center">{row.stt}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-center font-mono text-[6.5pt]">{row.jobCode}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-center text-[6.5pt]">{row.jobCode}</td>
                         <td className="border border-black px-1 py-0.5 text-left">{row.name}</td>
                         <td className="border border-black px-0.5 py-0.5 text-center">{row.unit}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.contractQty)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.prevUnpaidQty)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.prevPaidQty)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.thisPeriodAcceptedQty)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.totalCumulativeQty)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono font-semibold">{formatNumber(row.thisPeriodRequestedQty)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.unitPriceContract)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.unitPriceAdditional)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.contractVal)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.prevUnpaidVal)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.thisPeriodAcceptedVal)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono font-bold">{formatNumber(row.thisPeriodRequestedVal)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.thisPeriodUnpaidVal)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.prevPaidVal)}</td>
-                        <td className="border border-black px-0.5 py-0.5 text-right font-mono font-bold">{formatNumber(row.totalPaidToDateVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.contractQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.prevUnpaidQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.prevPaidQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.thisPeriodAcceptedQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.totalCumulativeQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums font-semibold">{formatNumber(row.thisPeriodRequestedQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.unitPriceContract)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.unitPriceAdditional)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.contractVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.prevUnpaidVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.thisPeriodAcceptedVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums font-bold">{formatNumber(row.thisPeriodRequestedVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.thisPeriodUnpaidVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums">{formatNumber(row.prevPaidVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right tabular-nums font-bold">{formatNumber(row.totalPaidToDateVal)}</td>
                         <td className="border border-black px-0.5 py-0.5 text-center text-[6.5pt]">{row.note}</td>
                       </tr>
                     ))}
@@ -625,13 +626,13 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
                   <td className="border border-black"></td>
                   <td className="border border-black"></td>
                   <td className="border border-black"></td>
-                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalContractVal)}</td>
-                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalPrevUnpaidVal)}</td>
-                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalThisPeriodAcceptedVal)}</td>
-                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalThisPeriodRequestedVal)}</td>
-                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalThisPeriodUnpaidVal)}</td>
-                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalPrevPaidVal)}</td>
-                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalPaidToDateVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right tabular-nums font-extrabold">{formatNumber(totalContractVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right tabular-nums font-extrabold">{formatNumber(totalPrevUnpaidVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right tabular-nums font-extrabold">{formatNumber(totalThisPeriodAcceptedVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right tabular-nums font-extrabold">{formatNumber(totalThisPeriodRequestedVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right tabular-nums font-extrabold">{formatNumber(totalThisPeriodUnpaidVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right tabular-nums font-extrabold">{formatNumber(totalPrevPaidVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right tabular-nums font-extrabold">{formatNumber(totalPaidToDateVal)}</td>
                   <td className="border border-black"></td>
                 </tr>
               </tbody>
@@ -683,10 +684,10 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
           </div>
 
           {/* Exact Legal Signature Block - Căn Chỉnh Cân Bằng Tuyệt Đối Chuẩn Văn Thư Nhà Nước */}
-          <div className="pt-8 grid grid-cols-2 text-center text-[8.5pt] gap-10 font-['Times_New_Roman',Times,serif] signature-block leading-normal text-black">
+          <div className="pt-6 grid grid-cols-2 text-center text-[8.5pt] gap-10 font-['Times_New_Roman',Times,serif] signature-block leading-normal text-black">
             
             {/* Cột Trái: ĐẠI DIỆN NHÀ THẦU */}
-            <div className="flex flex-col justify-between min-h-[190px] h-[190px]">
+            <div className="flex flex-col justify-between min-h-[105px] h-[105px]">
               <div>
                 {/* Dòng đệm ẩn tương ứng với dòng Ngày tháng bên phải để 2 chức danh ngang bằng nhau tuyệt đối */}
                 <p className="italic text-[8.5pt] pb-0.5 invisible select-none" aria-hidden="true">
@@ -701,7 +702,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
               </div>
 
               {/* Tên đơn vị / Họ tên người ký ở đáy - Đồng bộ chân đế thẳng hàng ngang tuyệt đối */}
-              <div className="min-h-[44px] flex items-end justify-center">
+              <div className="min-h-[36px] flex items-end justify-center">
                 <p className="font-bold uppercase text-black text-[9pt] leading-tight">
                   {contract?.contractor}
                 </p>
@@ -709,7 +710,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
             </div>
 
             {/* Cột Phải: CHỦ ĐẦU TƯ / BAN QLDA */}
-            <div className="flex flex-col justify-between min-h-[190px] h-[190px]">
+            <div className="flex flex-col justify-between min-h-[105px] h-[105px]">
               <div>
                 <p className="italic text-black pb-0.5 text-[8.5pt]">
                   ................., Ngày {new Date().getDate()} tháng {new Date().getMonth() + 1} năm {new Date().getFullYear()}
@@ -725,7 +726,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
               </div>
 
               {/* Tên chủ đầu tư ở đáy - Căn đồng bộ chân đế thẳng hàng ngang tuyệt đối */}
-              <div className="min-h-[44px] flex items-end justify-center">
+              <div className="min-h-[36px] flex items-end justify-center">
                 <p className="font-bold uppercase text-black text-[9pt] leading-tight">
                   {project?.owner}
                 </p>

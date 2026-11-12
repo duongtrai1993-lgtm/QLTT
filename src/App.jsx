@@ -16,6 +16,7 @@ import { Form04aModal } from './components/Form04aModal';
 import { ProjectModal } from './components/ProjectModal';
 import { ContractModal } from './components/ContractModal';
 import { WorkItemsModal } from './components/WorkItemsModal';
+import { QuantitiesView } from './views/QuantitiesView';
 
 export default function App() {
   const [projects, setProjects] = useState([]);
@@ -36,6 +37,7 @@ export default function App() {
   const [selectedPaymentForForm03a, setSelectedPaymentForForm03a] = useState(null);
   const [selectedPaymentForForm03c, setSelectedPaymentForForm03c] = useState(null);
   const [selectedPaymentForForm04a, setSelectedPaymentForForm04a] = useState(null);
+  const [activePaymentIdForQuantities, setActivePaymentIdForQuantities] = useState(null);
 
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
@@ -238,6 +240,20 @@ export default function App() {
             />
           )}
 
+          {currentTab === 'quantities' && (
+            <QuantitiesView
+              projects={visibleProjects}
+              contracts={visibleContracts}
+              payments={visiblePayments}
+              selectedPaymentId={activePaymentIdForQuantities}
+              onSelectPaymentId={setActivePaymentIdForQuantities}
+              onSavePaymentData={handleSavePayment}
+              onOpenForm03a={(p) => setSelectedPaymentForForm03a(p)}
+              onOpenNewPayment={() => { setEditingPayment(null); setIsPaymentModalOpen(true); }}
+              onManageWorkItems={(c) => setSelectedContractForWorkItems(c)}
+            />
+          )}
+
           {currentTab === 'payments' && (
             <PaymentsView
               payments={visiblePayments}
@@ -248,6 +264,10 @@ export default function App() {
               onOpenForm03a={(p) => setSelectedPaymentForForm03a(p)}
               onOpenForm03c={(p) => setSelectedPaymentForForm03c(p)}
               onOpenForm04a={(p) => setSelectedPaymentForForm04a(p)}
+              onNavigateToQuantities={(payId) => {
+                setActivePaymentIdForQuantities(payId);
+                setCurrentTab('quantities');
+              }}
               onEditPayment={(p) => { setEditingPayment(p); setIsPaymentModalOpen(true); }}
               onDeletePayment={handleDeletePayment}
             />

@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { Plus, Filter, FileText, CheckCircle, Clock, AlertCircle, Eye, Printer, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Filter, FileText, CheckCircle, Clock, AlertCircle, Eye, Printer, Edit2, Trash2, TableProperties } from 'lucide-react';
 import { StatusBadge } from '../components/StatusBadge';
 import { formatVND, formatDate } from '../services/storageService';
 
@@ -12,6 +12,7 @@ export function PaymentsView({
   onOpenForm03a,
   onOpenForm03c,
   onOpenForm04a,
+  onNavigateToQuantities,
   onEditPayment,
   onDeletePayment
 }) {
@@ -203,6 +204,16 @@ export function PaymentsView({
                           >
                             <Eye className="w-4 h-4" />
                           </button>
+
+                          {p.paymentType === 'progress' && onNavigateToQuantities && (
+                            <button
+                              onClick={() => onNavigateToQuantities(p.id)}
+                              title="Nhập và hiệu chỉnh chi tiết khối lượng nghiệm thu"
+                              className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition font-bold"
+                            >
+                              <TableProperties className="w-4 h-4" />
+                            </button>
+                          )}
                           
                           <button
                             onClick={() => {

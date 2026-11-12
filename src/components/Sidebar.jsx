@@ -1,10 +1,11 @@
 ﻿import React from 'react';
-import { LayoutDashboard, Building2, FileSignature, Receipt, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Building2, FileSignature, Receipt, ShieldAlert, TableProperties } from 'lucide-react';
 import { formatBillion } from '../services/storageService';
 
 export function Sidebar({ currentTab, onTabChange, stats }) {
   const navItems = [
     { id: 'dashboard', label: 'Tổng Quan & Báo Cáo', icon: LayoutDashboard },
+    { id: 'quantities', label: 'Nhập Khối Lượng', icon: TableProperties, badge: 'Mẫu 03.a', badgeColor: 'bg-blue-600 text-white' },
     { id: 'payments', label: 'Hồ Sơ & Đợt Thanh Toán', icon: Receipt, badge: stats?.pendingCount },
     { id: 'contracts', label: 'Hợp Đồng & Gói Thầu', icon: FileSignature, badge: stats?.contractCount },
     { id: 'projects', label: 'Dự Án Đầu Tư', icon: Building2, badge: stats?.projectCount },

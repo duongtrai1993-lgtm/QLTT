@@ -69,8 +69,7 @@ export function Form03cQTModal({ isOpen, onClose, payment, contract, project }) 
   return (
     <div
       id="form-03c-modal-container"
-      className="fixed inset-0 z-[100] overflow-hidden bg-slate-950/95 flex flex-col justify-between"
-      style={{ backdropFilter: 'blur(8px)' }}
+      className="fixed inset-0 z-[100] overflow-hidden bg-slate-950 flex flex-col justify-between"
     >
 
       {/* Dynamic CSS for print */}

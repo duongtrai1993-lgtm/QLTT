@@ -10,6 +10,8 @@ export function PaymentsView({
   onOpenNewPayment,
   onSelectPayment,
   onOpenForm03a,
+  onOpenForm03c,
+  onOpenForm04a,
   onEditPayment,
   onDeletePayment
 }) {
@@ -203,9 +205,25 @@ export function PaymentsView({
                           </button>
                           
                           <button
-                            onClick={() => onOpenForm03a(p)}
-                            title="Xem và in bảng Mẫu 03a"
-                            className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                            onClick={() => {
+                              if (p.paymentType === 'advance') {
+                                onOpenForm04a(p);
+                              } else if (p.paymentType === 'final') {
+                                onOpenForm03c(p);
+                              } else {
+                                onOpenForm03a(p);
+                              }
+                            }}
+                            title={
+                              p.paymentType === 'advance' ? 'Xem Mẫu 04.a/TT (Tạm ứng)' :
+                              p.paymentType === 'final' ? 'Xem Mẫu 03.c/QT (Quyết toán A-B)' :
+                              'Xem Mẫu 03.a/TT (Khối lượng hoàn thành)'
+                            }
+                            className={`p-1.5 rounded-lg transition ${
+                              p.paymentType === 'advance' ? 'text-emerald-600 hover:bg-emerald-50' :
+                              p.paymentType === 'final' ? 'text-amber-600 hover:bg-amber-50' :
+                              'text-blue-600 hover:bg-blue-50'
+                            }`}
                           >
                             <Printer className="w-4 h-4" />
                           </button>

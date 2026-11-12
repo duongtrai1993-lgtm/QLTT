@@ -11,6 +11,8 @@ import { GuaranteesView } from './views/GuaranteesView';
 import { PaymentModal } from './components/PaymentModal';
 import { PaymentDetailDrawer } from './components/PaymentDetailDrawer';
 import { Form03aModal } from './components/Form03aModal';
+import { Form03cQTModal } from './components/Form03cQTModal';
+import { Form04aModal } from './components/Form04aModal';
 import { ProjectModal } from './components/ProjectModal';
 import { ContractModal } from './components/ContractModal';
 
@@ -31,6 +33,8 @@ export default function App() {
 
   const [selectedPaymentForDetail, setSelectedPaymentForDetail] = useState(null);
   const [selectedPaymentForForm03a, setSelectedPaymentForForm03a] = useState(null);
+  const [selectedPaymentForForm03c, setSelectedPaymentForForm03c] = useState(null);
+  const [selectedPaymentForForm04a, setSelectedPaymentForForm04a] = useState(null);
 
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
@@ -188,6 +192,12 @@ export default function App() {
   const activeContractFor03a = contracts.find(c => c.id === selectedPaymentForForm03a?.contractId);
   const activeProjectFor03a = projects.find(p => p.id === activeContractFor03a?.projectId);
 
+  const activeContractFor03c = contracts.find(c => c.id === selectedPaymentForForm03c?.contractId);
+  const activeProjectFor03c = projects.find(p => p.id === activeContractFor03c?.projectId);
+
+  const activeContractFor04a = contracts.find(c => c.id === selectedPaymentForForm04a?.contractId);
+  const activeProjectFor04a = projects.find(p => p.id === activeContractFor04a?.projectId);
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       
@@ -234,6 +244,8 @@ export default function App() {
               onOpenNewPayment={() => { setEditingPayment(null); setIsPaymentModalOpen(true); }}
               onSelectPayment={(p) => setSelectedPaymentForDetail(p)}
               onOpenForm03a={(p) => setSelectedPaymentForForm03a(p)}
+              onOpenForm03c={(p) => setSelectedPaymentForForm03c(p)}
+              onOpenForm04a={(p) => setSelectedPaymentForForm04a(p)}
               onEditPayment={(p) => { setEditingPayment(p); setIsPaymentModalOpen(true); }}
               onDeletePayment={handleDeletePayment}
             />
@@ -297,6 +309,8 @@ export default function App() {
         onUpdatePaymentStatus={handleUpdatePaymentStatus}
         onUpdateDocumentStatus={handleUpdateDocumentStatus}
         onOpenForm03a={() => setSelectedPaymentForForm03a(selectedPaymentForDetail)}
+        onOpenForm03c={() => setSelectedPaymentForForm03c(selectedPaymentForDetail)}
+        onOpenForm04a={() => setSelectedPaymentForForm04a(selectedPaymentForDetail)}
         onDeletePayment={handleDeletePayment}
       />
 
@@ -306,6 +320,22 @@ export default function App() {
         payment={selectedPaymentForForm03a}
         contract={activeContractFor03a}
         project={activeProjectFor03a}
+      />
+
+      <Form03cQTModal
+        isOpen={Boolean(selectedPaymentForForm03c)}
+        onClose={() => setSelectedPaymentForForm03c(null)}
+        payment={selectedPaymentForForm03c}
+        contract={activeContractFor03c}
+        project={activeProjectFor03c}
+      />
+
+      <Form04aModal
+        isOpen={Boolean(selectedPaymentForForm04a)}
+        onClose={() => setSelectedPaymentForForm04a(null)}
+        payment={selectedPaymentForForm04a}
+        contract={activeContractFor04a}
+        project={activeProjectFor04a}
       />
 
       <ProjectModal

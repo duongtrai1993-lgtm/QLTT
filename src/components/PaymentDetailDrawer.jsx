@@ -14,6 +14,8 @@ export function PaymentDetailDrawer({
   onUpdatePaymentStatus,
   onUpdateDocumentStatus,
   onOpenForm03a,
+  onOpenForm03c,
+  onOpenForm04a,
   onDeletePayment
 }) {
   if (!isOpen || !payment) return null;
@@ -100,14 +102,54 @@ export function PaymentDetailDrawer({
               </div>
             </div>
 
-            <div className="pt-2">
-              <button
-                onClick={onOpenForm03a}
-                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-xs flex items-center justify-center gap-2 shadow-sm transition"
-              >
-                <FileText className="w-4 h-4" />
-                Xem Bảng Xác Định Khối Lượng (Mẫu số 03.a/TT - NĐ 254/2025)
-              </button>
+            <div className="pt-2 space-y-2">
+              {payment.paymentType === 'advance' && (
+                <button
+                  onClick={onOpenForm04a}
+                  className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-xs flex items-center justify-center gap-2 shadow-sm transition"
+                >
+                  <FileText className="w-4 h-4" />
+                  Xem Giấy Đề Nghị Thanh Toán Vốn Tạm Ứng (Mẫu 04.a/TT - NĐ 254/2025)
+                </button>
+              )}
+
+              {payment.paymentType === 'progress' && (
+                <>
+                  <button
+                    onClick={onOpenForm03a}
+                    className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-xs flex items-center justify-center gap-2 shadow-sm transition"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Xem Bảng Xác Định Khối Lượng (Mẫu 03.a/TT - NĐ 254/2025)
+                  </button>
+                  <button
+                    onClick={onOpenForm04a}
+                    className="w-full py-2 px-4 bg-slate-700 hover:bg-slate-600 text-slate-100 font-medium rounded-lg text-xs flex items-center justify-center gap-2 transition"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                    Xem Giấy Đề Nghị Thanh Toán Vốn (Mẫu 04.a/TT)
+                  </button>
+                </>
+              )}
+
+              {payment.paymentType === 'final' && (
+                <>
+                  <button
+                    onClick={onOpenForm03c}
+                    className="w-full py-2.5 px-4 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-2 shadow-sm transition"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Xem Bảng Quyết Toán Hợp Đồng A - B (Mẫu 03.c/QT - NĐ 254/2025)
+                  </button>
+                  <button
+                    onClick={onOpenForm04a}
+                    className="w-full py-2 px-4 bg-slate-700 hover:bg-slate-600 text-slate-100 font-medium rounded-lg text-xs flex items-center justify-center gap-2 transition"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                    Xem Giấy Đề Nghị Thanh Toán Vốn (Mẫu 04.a/TT)
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

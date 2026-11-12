@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Printer, FileSpreadsheet, Sliders, HelpCircle, SplitSquareVertical } from 'lucide-react';
+import { X, Printer, FileSpreadsheet, Sliders, Check, ZoomIn, ZoomOut, RotateCcw, LayoutTemplate } from 'lucide-react';
 import { formatVND, formatNumber, formatDate, numberToVietnameseWords } from '../services/storageService';
 import { exportService } from '../services/exportService';
 import { SAMPLE_FORM_03A_SECTIONS } from '../data/sampleData';
@@ -7,13 +7,34 @@ import { SAMPLE_FORM_03A_SECTIONS } from '../data/sampleData';
 export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
   if (!isOpen || !payment) return null;
 
-  // Print customization states
+  // Print & Layout Customization States
   const [paperSize, setPaperSize] = useState('a4'); // 'a4' | 'a3'
   const [orientation, setOrientation] = useState('landscape'); // 'landscape' | 'portrait'
-  const [marginSize, setMarginSize] = useState('5mm'); // '4mm', '6mm', '10mm'
-  const [fontSize, setFontSize] = useState('8pt'); // '7.5pt' | '8pt' | '8.5pt' | '9.5pt'
-  const [breakSummaryPage, setBreakSummaryPage] = useState(false); // Ngắt trang trước phần tổng hợp & chữ ký
+  const [marginSize, setMarginSize] = useState('4mm'); // '3mm', '4mm', '5mm', '8mm', '10mm'
+  const [fontSize, setFontSize] = useState('7pt'); // '6.5pt', '7pt', '7.5pt', '8pt', '8.5pt', '9pt'
+  const [zoomLevel, setZoomLevel] = useState(100); // 75, 90, 100, 110, 125 (%)
+  const [breakSummaryPage, setBreakSummaryPage] = useState(false);
   const [showConfig, setShowConfig] = useState(true);
+
+  // Quick Presets
+  const applyPreset = (preset) => {
+    if (preset === 'a4-landscape') {
+      setPaperSize('a4');
+      setOrientation('landscape');
+      setMarginSize('4mm');
+      setFontSize('7pt');
+    } else if (preset === 'a3-landscape') {
+      setPaperSize('a3');
+      setOrientation('landscape');
+      setMarginSize('8mm');
+      setFontSize('9pt');
+    } else if (preset === 'a4-portrait') {
+      setPaperSize('a4');
+      setOrientation('portrait');
+      setMarginSize('3mm');
+      setFontSize('6.5pt');
+    }
+  };
 
   const sections = SAMPLE_FORM_03A_SECTIONS;
   const allItems = sections.flatMap(s => s.items);
@@ -67,17 +88,29 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
     exportService.exportForm03aExcel(project, contract, payment, sections);
   };
 
+  // Tính chiều rộng trang xem thử trên màn hình
+  const getPaperWidthPx = () => {
+    if (orientation === 'landscape') {
+      return paperSize === 'a3' ? 1580 : 1180;
+    }
+    return paperSize === 'a3' ? 1120 : 840;
+  };
+
   return (
-    <div className="modal-print-overlay fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+    <div
+      id="form-03a-modal-container"
+      className="fixed inset-0 z-[100] overflow-hidden bg-slate-950/95 flex flex-col justify-between"
+      style={{ backdropFilter: 'blur(8px)' }}
+    >
       
-      {/* Dynamic CSS injected to guarantee TRUE multi-page flow and pagination */}
+      {/* Dynamic CSS injected for exact print layout & multi-page pagination */}
       <style>{`
         @page {
           size: ${paperSize.toUpperCase()} ${orientation};
           margin: ${marginSize};
         }
         @media print {
-          /* 1. Reset root, html and body to natural block flow */
+          /* 1. Global Reset for multi-page flow */
           html, body {
             overflow: visible !important;
             height: auto !important;
@@ -92,22 +125,21 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
             print-color-adjust: exact !important;
           }
 
-          /* 2. Hide all other application layouts completely */
-          body > #root > div > header,
-          body > #root > div > div > aside,
-          body > #root > div > div > main,
+          /* 2. Hide all other application components and modals */
+          body > #root > div > *:not(#form-03a-modal-container),
           .no-print {
             display: none !important;
           }
 
-          /* 3. Neutralize modal fixed overlays & viewport clipping boxes */
-          .modal-print-overlay,
-          .modal-print-card {
+          /* 3. Neutralize modal wrappers to prevent single-page clipping */
+          #form-03a-modal-container,
+          #form-03a-modal-workspace {
             position: static !important;
             inset: auto !important;
             width: 100% !important;
             max-width: none !important;
             height: auto !important;
+            min-height: auto !important;
             max-height: none !important;
             overflow: visible !important;
             border: none !important;
@@ -116,33 +148,38 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
             margin: 0 !important;
             background: white !important;
             display: block !important;
+            transform: none !important;
           }
 
-          /* 4. Printable content container flows across pages naturally */
+          /* 4. The actual printable document flows across multiple pages */
           #printable-form-03a {
             position: static !important;
             width: 100% !important;
+            max-width: 100% !important;
             height: auto !important;
             overflow: visible !important;
             margin: 0 !important;
             padding: 0 !important;
             background: white !important;
-            color: black !important;
+            color: #000000 !important;
             display: block !important;
             font-size: ${fontSize} !important;
             line-height: 1.25 !important;
+            box-shadow: none !important;
+            border: none !important;
+            transform: none !important;
           }
 
-          /* 5. Table multi-page splitting rules */
+          /* 5. Fixed-layout 100% width table guarantees zero right-edge clipping */
           .print-table {
             width: 100% !important;
             border-collapse: collapse !important;
+            table-layout: fixed !important;
             page-break-inside: auto !important;
-            table-layout: auto !important;
           }
           
           .print-table thead {
-            display: table-header-group !important; /* Lặp lại hàng tiêu đề 19 cột trên mỗi trang in */
+            display: table-header-group !important; /* Lặp lại tiêu đề 20 cột trên mỗi trang */
           }
 
           .print-table tbody {
@@ -150,220 +187,295 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
           }
 
           .print-table tr {
-            page-break-inside: avoid !important; /* Tránh ngắt đôi 1 hàng ở mép giấy */
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
             page-break-after: auto !important;
           }
 
           .print-table td, 
           .print-table th {
             page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            word-break: normal !important;
+            overflow: hidden !important;
           }
 
-          /* 6. Avoid breaking summary and signatures in half */
+          /* 6. Summary and signature blocks */
           .summary-block {
             page-break-inside: avoid !important;
-            ${breakSummaryPage ? 'page-break-before: always !important;' : ''}
+            break-inside: avoid !important;
+            ${breakSummaryPage ? 'page-break-before: always !important; break-before: always !important;' : ''}
           }
 
           .signature-block {
             page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
         }
       `}</style>
 
-      <div className="modal-print-card bg-white rounded-xl shadow-2xl max-w-[97vw] w-full max-h-[96vh] flex flex-col border border-slate-300">
-        
-        {/* Header no-print */}
-        <div className="px-6 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50 rounded-t-xl no-print">
+      {/* Top Controls Bar (no-print) */}
+      <div className="bg-slate-900 border-b border-slate-700 text-white px-5 py-2.5 shrink-0 flex flex-wrap items-center justify-between gap-3 no-print z-20 shadow-lg">
+        <div className="flex items-center gap-2.5">
+          <span className="p-1.5 bg-blue-600 text-white rounded-lg text-sm font-bold">📋</span>
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm">📋</span>
-              <h2 className="text-base font-bold text-slate-800">
-                Bảng Xác Định Giá Trị Khối Lượng Công Việc Hoàn Thành (Phụ lục 03.a/TT)
+              <h2 className="text-sm font-bold text-white">
+                Bảng Xác Định Giá Trị Khối Lượng Hoàn Thành (Phụ lục 03.a/TT)
               </h2>
-              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-xs font-bold border border-emerald-300">
+              <span className="px-2 py-0.5 bg-emerald-600 text-white rounded text-[10px] font-bold">
                 Nghị định 254/2025/NĐ-CP
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Hỗ trợ tự động nhảy trang in liên tiếp (Multi-page Pagination), lặp lại tiêu đề trên từng trang
+            <p className="text-[11px] text-slate-400">
+              Biểu mẫu chuẩn 20 cột • Đúng quy cách Bộ Xây dựng & Kho bạc • Cố định 100% không tràn lề
             </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowConfig(!showConfig)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg border flex items-center gap-1.5 transition ${
-                showConfig ? 'bg-blue-50 text-blue-700 border-blue-300' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-              }`}
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              <span>{showConfig ? 'Ẩn cài đặt in' : 'Căn chỉnh trang in'}</span>
-            </button>
-
-            <button
-              onClick={handleExportExcel}
-              className="px-3.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg flex items-center gap-1.5 transition shadow-sm"
-              title="Xuất Excel theo đúng 19 cột chuẩn NĐ 254/2025"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              Xuất Excel (.xlsx)
-            </button>
-
-            <button
-              onClick={handlePrint}
-              className="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-1.5 transition shadow-sm"
-              title="In ra giấy hoặc lưu thành file PDF (tự động phân trang)"
-            >
-              <Printer className="w-4 h-4" />
-              In / Xuất PDF (Nhiều trang)
-            </button>
-
-            <button
-              onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
         </div>
 
-        {/* Print Configuration Toolbar */}
-        {showConfig && (
-          <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 px-6 py-3 border-b border-blue-100 no-print text-xs">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              
-              <div className="flex flex-wrap items-center gap-4">
-                {/* 1. Hướng giấy */}
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-slate-700">Hướng in:</span>
-                  <div className="inline-flex rounded-lg border border-slate-300 p-0.5 bg-white shadow-sm">
-                    <button
-                      type="button"
-                      onClick={() => setOrientation('landscape')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition ${
-                        orientation === 'landscape' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Khổ Ngang (Khuyên dùng)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setOrientation('portrait')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
-                        orientation === 'portrait' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Khổ Đứng
-                    </button>
-                  </div>
-                </div>
+        <div className="flex items-center gap-2">
+          {/* Zoom controls */}
+          <div className="flex items-center bg-slate-800 border border-slate-700 rounded-lg p-0.5 text-xs text-slate-300">
+            <button
+              onClick={() => setZoomLevel(Math.max(60, zoomLevel - 10))}
+              className="p-1 hover:text-white rounded hover:bg-slate-700 transition"
+              title="Thu nhỏ xem thử"
+            >
+              <ZoomOut className="w-3.5 h-3.5" />
+            </button>
+            <span className="px-1.5 font-mono text-[11px] font-semibold">{zoomLevel}%</span>
+            <button
+              onClick={() => setZoomLevel(Math.min(140, zoomLevel + 10))}
+              className="p-1 hover:text-white rounded hover:bg-slate-700 transition"
+              title="Phóng to xem thử"
+            >
+              <ZoomIn className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setZoomLevel(100)}
+              className="p-1 hover:text-white rounded hover:bg-slate-700 transition ml-0.5"
+              title="Tỉ lệ gốc 100%"
+            >
+              <RotateCcw className="w-3 h-3 text-slate-400" />
+            </button>
+          </div>
 
-                {/* 2. Khổ giấy */}
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-slate-700">Khổ giấy:</span>
-                  <div className="inline-flex rounded-lg border border-slate-300 p-0.5 bg-white shadow-sm">
-                    <button
-                      type="button"
-                      onClick={() => setPaperSize('a4')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition ${
-                        paperSize === 'a4' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      A4
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaperSize('a3')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition ${
-                        paperSize === 'a3' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      A3
-                    </button>
-                  </div>
-                </div>
+          <button
+            onClick={() => setShowConfig(!showConfig)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border flex items-center gap-1.5 transition ${
+              showConfig ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>{showConfig ? 'Ẩn bảng chỉnh' : 'Hiệu chỉnh trang in'}</span>
+          </button>
 
-                {/* 3. Căn lề giấy */}
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-slate-700">Căn lề:</span>
-                  <select
-                    value={marginSize}
-                    onChange={(e) => setMarginSize(e.target.value)}
-                    className="px-2 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="4mm">Siêu hẹp (4mm)</option>
-                    <option value="5mm">Hẹp (5mm - Khuyên dùng)</option>
-                    <option value="8mm">Vừa (8mm)</option>
-                    <option value="12mm">Chuẩn (12mm)</option>
-                  </select>
-                </div>
+          <button
+            onClick={handleExportExcel}
+            className="px-3.5 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-600/70 rounded-lg flex items-center gap-1.5 transition shadow-sm"
+            title="Xuất file Excel đầy đủ 20 cột và 6 mục tổng hợp"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+            <span>Xuất Excel (.xlsx)</span>
+          </button>
 
-                {/* 4. Cỡ chữ in */}
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-slate-700">Cỡ chữ:</span>
-                  <select
-                    value={fontSize}
-                    onChange={(e) => setFontSize(e.target.value)}
-                    className="px-2 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="7.5pt">Siêu nhỏ (7.5pt)</option>
-                    <option value="8pt">Nhỏ gọn (8pt - Chuẩn A4 ngang)</option>
-                    <option value="8.5pt">Vừa vặn (8.5pt)</option>
-                    <option value="9.5pt">Tiêu chuẩn (9.5pt)</option>
-                    <option value="10.5pt">Lớn (10.5pt - Khuyên dùng A3)</option>
-                  </select>
-                </div>
+          <button
+            onClick={handlePrint}
+            className="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-lg flex items-center gap-1.5 transition shadow-md shadow-blue-500/25"
+            title="Mở hộp thoại In hoặc Lưu file PDF"
+          >
+            <Printer className="w-4 h-4" />
+            <span>In / Lưu PDF</span>
+          </button>
 
-                {/* 5. Tùy chọn ngắt trang trước tổng hợp */}
-                <label className="flex items-center gap-1.5 cursor-pointer font-medium text-slate-700 hover:text-blue-700 select-none">
-                  <input
-                    type="checkbox"
-                    checked={breakSummaryPage}
-                    onChange={(e) => setBreakSummaryPage(e.target.checked)}
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
-                  />
-                  <span>Tách trang Tổng hợp & Chữ ký</span>
-                </label>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition ml-1"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
 
-              </div>
-
-              <div className="text-[11px] text-blue-800 bg-blue-100/70 px-3 py-1.5 rounded-lg border border-blue-200/80 flex items-center gap-1.5">
-                <HelpCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  Đã kích hoạt tự động nhảy trang (multi-page). Tiêu đề 19 cột sẽ tự động lặp lại ở đầu trang 2, 3...
+      {/* Print Configuration Ribbon (no-print) */}
+      {showConfig && (
+        <div className="bg-slate-900/95 border-b border-slate-800 px-5 py-2.5 text-white text-xs shrink-0 no-print">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Presets Nhanh */}
+              <div className="flex items-center gap-1.5 pr-2 border-r border-slate-700">
+                <span className="font-semibold text-slate-400 flex items-center gap-1">
+                  <LayoutTemplate className="w-3.5 h-3.5 text-blue-400" /> Mẫu in:
                 </span>
+                <button
+                  type="button"
+                  onClick={() => applyPreset('a4-landscape')}
+                  className={`px-2 py-0.5 rounded text-[11px] font-bold border transition ${
+                    paperSize === 'a4' && orientation === 'landscape'
+                      ? 'bg-blue-600 text-white border-blue-500'
+                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                  }`}
+                  title="A4 Ngang, lề 4mm, chữ 7pt - Vừa vặn 100% khổ A4"
+                >
+                  A4 Ngang (Khuyên dùng)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset('a3-landscape')}
+                  className={`px-2 py-0.5 rounded text-[11px] font-bold border transition ${
+                    paperSize === 'a3' && orientation === 'landscape'
+                      ? 'bg-blue-600 text-white border-blue-500'
+                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                  }`}
+                  title="A3 Ngang, chữ 9pt - Rất rộng rãi, phù hợp Ban QLDA & Kho bạc"
+                >
+                  A3 Ngang (Trình ký)
+                </button>
               </div>
+
+              {/* 1. Hướng in */}
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-slate-400">Hướng:</span>
+                <div className="inline-flex rounded-md p-0.5 bg-slate-800 border border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => setOrientation('landscape')}
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition ${
+                      orientation === 'landscape' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Ngang
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrientation('portrait')}
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
+                      orientation === 'portrait' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Đứng
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Khổ giấy */}
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-slate-400">Khổ:</span>
+                <div className="inline-flex rounded-md p-0.5 bg-slate-800 border border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => setPaperSize('a4')}
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition ${
+                      paperSize === 'a4' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    A4
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaperSize('a3')}
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition ${
+                      paperSize === 'a3' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    A3
+                  </button>
+                </div>
+              </div>
+
+              {/* 3. Căn lề */}
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-slate-400">Lề:</span>
+                <select
+                  value={marginSize}
+                  onChange={(e) => setMarginSize(e.target.value)}
+                  className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-slate-200 text-[11px] font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="3mm">3mm (Cực hẹp)</option>
+                  <option value="4mm">4mm (Chuẩn A4 20 cột)</option>
+                  <option value="5mm">5mm (Hẹp)</option>
+                  <option value="8mm">8mm (Vừa vặn A3)</option>
+                  <option value="12mm">12mm (Tiêu chuẩn)</option>
+                </select>
+              </div>
+
+              {/* 4. Cỡ chữ bảng in */}
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-slate-400">Cỡ chữ:</span>
+                <select
+                  value={fontSize}
+                  onChange={(e) => setFontSize(e.target.value)}
+                  className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-slate-200 text-[11px] font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="6.5pt">6.5pt (Siêu gọn)</option>
+                  <option value="7pt">7pt (Chuẩn A4 Ngang - Đề xuất)</option>
+                  <option value="7.5pt">7.5pt (Vừa vặn)</option>
+                  <option value="8pt">8pt</option>
+                  <option value="8.5pt">8.5pt</option>
+                  <option value="9pt">9pt (Chuẩn A3 Ngang)</option>
+                </select>
+              </div>
+
+              {/* 5. Tách trang chữ ký */}
+              <label className="flex items-center gap-1.5 cursor-pointer font-medium text-slate-300 hover:text-white select-none pl-2 border-l border-slate-700">
+                <input
+                  type="checkbox"
+                  checked={breakSummaryPage}
+                  onChange={(e) => setBreakSummaryPage(e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                />
+                <span className="text-[11px]">Ngắt trang trước Tổng hợp & Chữ ký</span>
+              </label>
 
             </div>
-          </div>
-        )}
 
-        {/* Printable Paper Area */}
+            <div className="text-[11px] text-emerald-300 bg-emerald-950/70 px-2.5 py-1 rounded border border-emerald-700/60 flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Đã căn chuẩn 20 cột (Đơn giá 2 cột, Giá trị 7 cột) - Không cắt mép phải</span>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Main Preview Workspace - Scrollable Center Sheet */}
+      <div
+        id="form-03a-modal-workspace"
+        className="flex-1 overflow-y-auto overflow-x-auto p-4 sm:p-6 bg-slate-900/90 flex justify-center items-start"
+      >
+        
+        {/* Printable Paper Canvas - Exact A4/A3 Aspect Sheet */}
         <div
-          className="overflow-y-auto p-4 md:p-8 space-y-4 text-slate-900 bg-white text-xs font-['Times_New_Roman',serif]"
           id="printable-form-03a"
-          style={{ fontSize: fontSize }}
+          className="bg-white text-black shadow-2xl p-4 sm:p-6 font-['Times_New_Roman',Times,serif] leading-tight transition-transform duration-100 origin-top shrink-0"
+          style={{
+            width: `${getPaperWidthPx()}px`,
+            minHeight: orientation === 'landscape' ? (paperSize === 'a3' ? '1120px' : '820px') : (paperSize === 'a3' ? '1580px' : '1180px'),
+            transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : 'none',
+            fontSize: fontSize,
+            color: '#000000'
+          }}
         >
           
-          {/* Header Title theo mẫu chính xác */}
-          <div className="text-center space-y-1">
-            <h1 className="text-sm md:text-base font-bold uppercase tracking-wide text-slate-900">
+          {/* Header Title theo đúng mẫu gốc Phụ lục 03.a/TT */}
+          <div className="text-center space-y-1 pb-3 text-black">
+            <h1 className="text-[12pt] font-bold uppercase tracking-wide text-black leading-snug">
               BẢNG XÁC ĐỊNH GIÁ TRỊ KHỐI LƯỢNG CÔNG VIỆC HOÀN THÀNH
             </h1>
-            <p className="italic text-[11px] text-slate-700">
+            <p className="italic text-[9pt] text-black">
               (Căn cứ theo Nghị định 254/2025/NĐ-CP ngày 26/9/2025 của Chính Phủ - Phụ lục 03.a/TT)
             </p>
-            <p className="font-bold uppercase text-xs pt-1">
+            <p className="font-bold uppercase text-[9pt] pt-0.5 text-black">
               CÔNG TRÌNH: {contract?.packageName || project?.name}
             </p>
-            <p className="font-bold uppercase text-xs">
+            <p className="font-bold uppercase text-[9pt] text-black">
               HẠNG MỤC: Hạng mục 1
             </p>
           </div>
 
-          {/* Metadata Section */}
-          <div className="space-y-1 text-xs pt-2">
+          {/* Metadata Section - 100% black administrative font */}
+          <div className="space-y-0.5 text-[8.5pt] text-black leading-normal pb-2">
             <div><span className="font-bold">Tên dự án:</span> {project?.name}</div>
             <div><span className="font-bold">Mã dự án:</span> {project?.code}</div>
             <div><span className="font-bold">Căn cứ Bảng thông tin của Hợp đồng số:</span> {contract?.code} ngày {formatDate(contract?.signDate)}</div>
@@ -374,79 +486,135 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
             <div><span className="font-bold">Căn cứ Biên bản nghiệm thu số:</span> 0{payment.stageNumber}/NT-GĐ/2026 &nbsp;&nbsp;&nbsp;&nbsp; Ngày {new Date().getDate()} tháng {new Date().getMonth() + 1} năm {new Date().getFullYear()}</div>
           </div>
 
-          {/* 19-Column Table */}
-          <div className="overflow-x-auto border border-black pt-1">
-            <table className="w-full border-collapse border border-black font-['Times_New_Roman',serif] print-table" style={{ fontSize: fontSize }}>
-              <thead className="bg-slate-100 text-center font-bold">
+          {/* 20-Column Table with Colgroup Fixed Widths (Guaranteed Zero Overflow) */}
+          <div className="w-full">
+            <table
+              className="print-table w-full border-collapse border border-black text-black"
+              style={{
+                tableLayout: 'fixed',
+                width: '100%',
+                fontSize: fontSize
+              }}
+            >
+              <colgroup>
+                <col style={{ width: '2.5%' }} />  {/* 1. STT */}
+                <col style={{ width: '4.5%' }} />  {/* 2. Mã hiệu CV */}
+                <col style={{ width: '16.5%' }} /> {/* 3. Chỉ tiêu */}
+                <col style={{ width: '2.8%' }} />  {/* 4. ĐVT */}
+                <col style={{ width: '4.5%' }} />  {/* 5. KL HĐ */}
+                <col style={{ width: '4.0%' }} />  {/* 6. KL chưa TT trước */}
+                <col style={{ width: '4.4%' }} />  {/* 7. KL đã TT trước */}
+                <col style={{ width: '4.5%' }} />  {/* 8. KL nghiệm thu kỳ này */}
+                <col style={{ width: '4.8%' }} />  {/* 9. KL lũy kế */}
+                <col style={{ width: '4.5%' }} />  {/* 10. KL đề nghị TT */}
+                <col style={{ width: '5.5%' }} />  {/* 11. Đơn giá HĐ */}
+                <col style={{ width: '3.8%' }} />  {/* 12. Đơn giá BS */}
+                <col style={{ width: '6.8%' }} />  {/* 13. Giá trị HĐ */}
+                <col style={{ width: '4.2%' }} />  {/* 14. Giá trị chưa TT trước */}
+                <col style={{ width: '6.0%' }} />  {/* 15. Giá trị NT kỳ này */}
+                <col style={{ width: '6.0%' }} />  {/* 16. Giá trị đề nghị TT */}
+                <col style={{ width: '4.2%' }} />  {/* 17. Giá trị chưa TT nay */}
+                <col style={{ width: '6.0%' }} />  {/* 18. Lũy kế đã TT trước */}
+                <col style={{ width: '6.5%' }} />  {/* 19. Lũy kế đã TT nay */}
+                <col style={{ width: '3.2%' }} />  {/* 20. Ghi chú */}
+              </colgroup>
+
+              <thead className="text-center font-bold text-black bg-white">
+                {/* Header Row 1 */}
                 <tr>
-                  <th rowSpan="2" className="border border-black px-1 py-1 w-6">STT</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1 w-14">Mã hiệu công việc</th>
-                  <th rowSpan="2" className="border border-black px-2 py-1 min-w-[150px]">Chỉ tiêu</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1 w-8">Đơn vị tính</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">KL theo hợp đồng /dự toán</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">KLHT chưa thanh toán đến hết kỳ trước</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">KLHT đã thanh toán đến hết kỳ trước</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">KLHT nghiệm thu trong kỳ này</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">KLHT lũy kế đến hết kỳ này</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">KLHT đề nghị thanh toán kỳ này</th>
-                  <th colSpan="2" className="border border-black px-1 py-0.5">Đơn giá thanh toán</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">Giá trị hợp đồng /dự toán</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">Giá trị KLHT chưa thanh toán đến hết kỳ trước</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">Giá trị KLHT nghiệm thu trong kỳ này</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">Giá trị KLHT đề nghị thanh toán kỳ này</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">Giá trị KLHT chưa thanh toán đến hết kỳ này</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">Lũy kế giá trị KLHT đã thanh toán đến hết kỳ trước</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1">Lũy kế giá trị KLHT đã thanh toán đến hết kỳ này</th>
-                  <th rowSpan="2" className="border border-black px-1 py-1 w-14">Ghi chú</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">STT</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">Mã hiệu công việc</th>
+                  <th rowSpan="2" className="border border-black px-1 py-0.5 text-left align-middle">Chỉ tiêu</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">Đơn vị tính</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">KL theo hợp đồng /dự toán</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">KLHT chưa thanh toán đến hết kỳ trước</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">KLHT đã thanh toán đến hết kỳ trước</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">KLHT nghiệm thu trong kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">KLHT lũy kế đến hết kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">KLHT đề nghị thanh toán kỳ này</th>
+                  <th colSpan="2" className="border border-black px-0.5 py-0.5 align-middle">Đơn giá thanh toán</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">Giá trị hợp đồng /dự toán</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">Giá trị KLHT chưa thanh toán đến hết kỳ trước</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">Giá trị KLHT nghiệm thu trong kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">Giá trị KLHT đề nghị thanh toán kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">Giá trị KLHT chưa thanh toán đến hết kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">Lũy kế giá trị KLHT đã thanh toán đến hết kỳ trước</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">Lũy kế giá trị KLHT đã thanh toán đến hết kỳ này</th>
+                  <th rowSpan="2" className="border border-black px-0.5 py-0.5 align-middle">Ghi chú</th>
                 </tr>
+                {/* Header Row 2 */}
                 <tr>
-                  <th className="border border-black px-1 py-0.5">Theo hợp đồng</th>
-                  <th className="border border-black px-1 py-0.5">Đơn giá bổ sung</th>
+                  <th className="border border-black px-0.5 py-0.5 align-middle">Theo hợp đồng</th>
+                  <th className="border border-black px-0.5 py-0.5 align-middle">Đơn giá bổ sung</th>
+                </tr>
+                {/* Header Row 3: Official Column Numbering & Formulas */}
+                <tr className="text-[6.5pt] font-normal text-black bg-slate-50/50">
+                  <th className="border border-black px-0.5 py-0.5 text-center">(1)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(2)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(3)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(4)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(5)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(6)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(7)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(8)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(9)=(7)+(8)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(10)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(11)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(12)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(13)=(5)x(11)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(14)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(15)=(8)x(11)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(16)=(10)x(11)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(17)=(15)-(16)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(18)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(19)=(18)+(16)</th>
+                  <th className="border border-black px-0.5 py-0.5 text-center">(20)</th>
                 </tr>
               </thead>
+
               <tbody>
                 {sections.map(section => (
                   <React.Fragment key={section.sectionCode}>
                     {/* Section Header Row */}
-                    <tr className="bg-slate-200/80 font-bold">
-                      <td className="border border-black px-1 py-1 text-center">{section.sectionCode}</td>
-                      <td className="border border-black px-1 py-1"></td>
-                      <td colSpan="17" className="border border-black px-2 py-1 text-left uppercase">
+                    <tr className="font-bold bg-slate-100/60">
+                      <td className="border border-black px-0.5 py-0.5 text-center">{section.sectionCode}</td>
+                      <td className="border border-black px-0.5 py-0.5"></td>
+                      <td colSpan="18" className="border border-black px-1.5 py-0.5 text-left uppercase">
                         {section.sectionName}
                       </td>
                     </tr>
 
-                    {/* Items */}
+                    {/* Section Items */}
                     {section.items.map((row, rIdx) => (
                       <tr key={rIdx} className="hover:bg-slate-50">
-                        <td className="border border-black px-1 py-1 text-center">{row.stt}</td>
-                        <td className="border border-black px-1 py-1 text-center font-mono text-[9px]">{row.jobCode}</td>
-                        <td className="border border-black px-1.5 py-1 text-left">{row.name}</td>
-                        <td className="border border-black px-1 py-1 text-center">{row.unit}</td>
-                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.contractQty)}</td>
-                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.prevUnpaidQty)}</td>
-                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.prevPaidQty)}</td>
-                        <td className="border border-black px-1 py-1 text-right font-medium">{formatNumber(row.thisPeriodAcceptedQty)}</td>
-                        <td className="border border-black px-1 py-1 text-right font-medium">{formatNumber(row.totalCumulativeQty)}</td>
-                        <td className="border border-black px-1 py-1 text-right font-semibold bg-emerald-50/50">{formatNumber(row.thisPeriodRequestedQty)}</td>
-                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.unitPriceContract)}</td>
-                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.unitPriceAdditional)}</td>
-                        <td className="border border-black px-1 py-1 text-right font-medium">{formatNumber(row.contractVal)}</td>
-                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.prevUnpaidVal)}</td>
-                        <td className="border border-black px-1 py-1 text-right font-medium">{formatNumber(row.thisPeriodAcceptedVal)}</td>
-                        <td className="border border-black px-1 py-1 text-right font-bold text-emerald-800 bg-emerald-50/50">{formatNumber(row.thisPeriodRequestedVal)}</td>
-                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.thisPeriodUnpaidVal)}</td>
-                        <td className="border border-black px-1 py-1 text-right">{formatNumber(row.prevPaidVal)}</td>
-                        <td className="border border-black px-1 py-1 text-right font-bold text-amber-900 bg-amber-50/40">{formatNumber(row.totalPaidToDateVal)}</td>
-                        <td className="border border-black px-1 py-1 text-center text-[9px]">{row.note}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-center">{row.stt}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-center font-mono text-[6.5pt]">{row.jobCode}</td>
+                        <td className="border border-black px-1 py-0.5 text-left">{row.name}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-center">{row.unit}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.contractQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.prevUnpaidQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.prevPaidQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.thisPeriodAcceptedQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.totalCumulativeQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono font-semibold">{formatNumber(row.thisPeriodRequestedQty)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.unitPriceContract)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.unitPriceAdditional)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.contractVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.prevUnpaidVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.thisPeriodAcceptedVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono font-bold">{formatNumber(row.thisPeriodRequestedVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.thisPeriodUnpaidVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono">{formatNumber(row.prevPaidVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-right font-mono font-bold">{formatNumber(row.totalPaidToDateVal)}</td>
+                        <td className="border border-black px-0.5 py-0.5 text-center text-[6.5pt]">{row.note}</td>
                       </tr>
                     ))}
                   </React.Fragment>
                 ))}
 
-                {/* Tổng số row */}
-                <tr className="bg-slate-200 font-bold border-t-2 border-black">
-                  <td colSpan="4" className="border border-black px-2 py-1.5 text-center uppercase tracking-wider font-extrabold">
+                {/* Hàng Tổng số */}
+                <tr className="font-bold border-t-2 border-black bg-slate-100/60">
+                  <td colSpan="4" className="border border-black px-1 py-1 text-center uppercase tracking-wider font-extrabold">
                     Tổng số:
                   </td>
                   <td className="border border-black"></td>
@@ -457,21 +625,21 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
                   <td className="border border-black"></td>
                   <td className="border border-black"></td>
                   <td className="border border-black"></td>
-                  <td className="border border-black px-1 py-1 text-right font-extrabold">{formatNumber(totalContractVal)}</td>
-                  <td className="border border-black px-1 py-1 text-right font-extrabold">{formatNumber(totalPrevUnpaidVal)}</td>
-                  <td className="border border-black px-1 py-1 text-right font-extrabold">{formatNumber(totalThisPeriodAcceptedVal)}</td>
-                  <td className="border border-black px-1 py-1 text-right font-extrabold text-emerald-900 bg-emerald-100">{formatNumber(totalThisPeriodRequestedVal)}</td>
-                  <td className="border border-black px-1 py-1 text-right font-extrabold">{formatNumber(totalThisPeriodUnpaidVal)}</td>
-                  <td className="border border-black px-1 py-1 text-right font-extrabold">{formatNumber(totalPrevPaidVal)}</td>
-                  <td className="border border-black px-1 py-1 text-right font-extrabold text-amber-900 bg-amber-100">{formatNumber(totalPaidToDateVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalContractVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalPrevUnpaidVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalThisPeriodAcceptedVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalThisPeriodRequestedVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalThisPeriodUnpaidVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalPrevPaidVal)}</td>
+                  <td className="border border-black px-0.5 py-1 text-right font-mono font-extrabold">{formatNumber(totalPaidToDateVal)}</td>
                   <td className="border border-black"></td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          {/* 6 Mục Tổng Hợp Số Liệu Chuẩn Theo Phụ Lục 03.a/TT */}
-          <div className="space-y-1.5 pt-3 text-xs border-t border-slate-300 summary-block">
+          {/* 6 Mục Tổng Hợp Số Liệu - Định Dạng Chuẩn Văn Bản Hành Chính (100% Chữ Đen, Không Dùng Khung Màu Web) */}
+          <div className="pt-3 text-[8.5pt] leading-normal text-black summary-block space-y-0.5 font-['Times_New_Roman',Times,serif]">
             <p>
               <strong>1. Giá trị tạm ứng còn lại chưa thu hồi đến hết kỳ trước:</strong> {formatVND(advanceRemainingPrev)}
             </p>
@@ -485,7 +653,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
               2.2. Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): {formatVND(prevRetentionFund)}
             </p>
             <p className="pl-6">
-              2.3. Chuyển vào tài khoản tạm giữ chờ quyết toán: {formatVND(prevPendingEscrow)}
+              2.3. Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 ₫
             </p>
             <p>
               <strong>3. Luỹ kế giá trị khối lượng thực hiện đến hết kỳ này:</strong> {formatVND(cumulativeWorkCompleted)}
@@ -493,61 +661,56 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
             <p>
               <strong>4. Thanh toán để thu hồi tạm ứng:</strong> {formatVND(advanceRecoveryThisPeriod)}
             </p>
-            
-            <div className="space-y-1 bg-slate-50 p-3 rounded border border-slate-300">
-              <p>
-                <strong>5. Giá trị đề nghị giải ngân kỳ này:</strong> <span className="font-bold text-sm text-blue-800">{formatVND(totalDisbursementRequestedThisPeriod)}</span>
-              </p>
-              <p className="italic pl-4 text-slate-700">
-                • Số tiền bằng chữ: <strong>{wordsAmount}</strong> (là số tiền đề nghị giải ngân kỳ này), trong đó:
-              </p>
-              <p className="pl-8">- Tạm ứng: 0 ₫</p>
-              <p className="pl-8">- Thanh toán khối lượng hoàn thành: {formatVND(totalDisbursementRequestedThisPeriod)}</p>
-              <p className="pl-12">+ Thanh toán cho nhà thầu: <strong className="text-emerald-700">{formatVND(netPaidToContractorThisPeriod)}</strong></p>
-              <p className="pl-12">+ Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): <strong>{formatVND(retentionThisPeriod)}</strong></p>
-              <p className="pl-12">+ Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 ₫</p>
-            </div>
-
-            <div className="space-y-1 bg-slate-50 p-3 rounded border border-slate-300">
-              <p>
-                <strong>6. Luỹ kế giá trị giải ngân:</strong> <span className="font-bold text-sm text-slate-900">{formatVND(grandTotalDisbursedCum)}</span>, trong đó:
-              </p>
-              <p className="pl-6">6.1. Tạm ứng: {formatVND(totalAdvanceDisbursedCum)}</p>
-              <p className="pl-6">6.2. Thanh toán khối lượng hoàn thành: {formatVND(totalCompletedDisbursedCum)}</p>
-              <p className="pl-10">- Thanh toán cho nhà thầu: {formatVND(Math.round(totalCompletedDisbursedCum * 0.95))}</p>
-              <p className="pl-10">- Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): {formatVND(Math.round(totalCompletedDisbursedCum * 0.05))}</p>
-              <p className="pl-10">- Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 ₫</p>
-            </div>
+            <p>
+              <strong>5. Giá trị đề nghị giải ngân kỳ này:</strong> <strong>{formatVND(totalDisbursementRequestedThisPeriod)}</strong>
+            </p>
+            <p className="italic pl-6 text-black">
+              Số tiền bằng chữ: <strong className="not-italic">{wordsAmount}</strong> (là số tiền đề nghị giải ngân kỳ này), trong đó:
+            </p>
+            <p className="pl-8">- Tạm ứng: 0 ₫</p>
+            <p className="pl-8">- Thanh toán khối lượng hoàn thành: {formatVND(totalDisbursementRequestedThisPeriod)}</p>
+            <p className="pl-12">+ Thanh toán cho nhà thầu: <strong>{formatVND(netPaidToContractorThisPeriod)}</strong></p>
+            <p className="pl-12">+ Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): <strong>{formatVND(retentionThisPeriod)}</strong></p>
+            <p className="pl-12">+ Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 ₫</p>
+            <p>
+              <strong>6. Luỹ kế giá trị giải ngân:</strong> <strong>{formatVND(grandTotalDisbursedCum)}</strong>, trong đó:
+            </p>
+            <p className="pl-6">6.1. Tạm ứng: {formatVND(totalAdvanceDisbursedCum)}</p>
+            <p className="pl-6">6.2. Thanh toán khối lượng hoàn thành: {formatVND(totalCompletedDisbursedCum)}</p>
+            <p className="pl-10">- Thanh toán cho nhà thầu: {formatVND(Math.round(totalCompletedDisbursedCum * 0.95))}</p>
+            <p className="pl-10">- Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): {formatVND(Math.round(totalCompletedDisbursedCum * 0.05))}</p>
+            <p className="pl-10">- Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 ₫</p>
           </div>
 
-          {/* Exact Legal Signature Block */}
-          <div className="pt-8 grid grid-cols-2 text-center text-xs gap-8 font-['Times_New_Roman',serif] signature-block">
-            <div className="space-y-20">
+          {/* Exact Legal Signature Block - Khối Chữ Ký Chuẩn Nghị Định 254/2025 */}
+          <div className="pt-6 grid grid-cols-2 text-center text-[8.5pt] gap-8 font-['Times_New_Roman',Times,serif] signature-block leading-normal text-black">
+            <div className="space-y-14">
               <div>
-                <p className="font-bold uppercase">ĐẠI DIỆN NHÀ THẦU (ĐƠN VỊ THỰC HIỆN)</p>
-                <p className="italic text-slate-500 text-[11px]">(Ký, ghi rõ họ tên, chức vụ, đóng dấu)</p>
+                <p className="font-bold uppercase text-[9pt]">ĐẠI DIỆN NHÀ THẦU (ĐƠN VỊ THỰC HIỆN)</p>
+                <p className="italic text-[8pt] text-black">(Ký, ghi rõ họ tên, chức vụ, đóng dấu)</p>
               </div>
-              <p className="font-bold uppercase text-slate-800">{contract?.contractor}</p>
+              <p className="font-bold uppercase text-black text-[9pt]">{contract?.contractor}</p>
             </div>
 
-            <div className="space-y-20">
+            <div className="space-y-14">
               <div>
-                <p className="italic text-slate-600 pb-1">
+                <p className="italic text-black pb-0.5 text-[8.5pt]">
                   ................., Ngày {new Date().getDate()} tháng {new Date().getMonth() + 1} năm {new Date().getFullYear()}
                 </p>
-                <p className="font-bold uppercase leading-snug">
+                <p className="font-bold uppercase leading-snug text-black text-[9pt]">
                   CHỦ ĐẦU TƯ/BAN QUẢN LÝ DỰ ÁN/<br />
-                  ĐƠN VỊ, TỔ CHỨC LÀM NHIỆM VỤ BỒI THƯỜNG, HỖ TRỢ TÁI ĐỊNH CƯ
+                  ĐƠN VỊ, TỔ CHỨC LÀM NHIỆM VỤ<br />
+                  BỒI THƯỜNG, HỖ TRỢ TÁI ĐỊNH CƯ
                 </p>
-                <p className="italic text-slate-500 text-[11px]">(Ký, ghi rõ họ tên và đóng dấu)</p>
+                <p className="italic text-[8pt] text-black">(Ký, ghi rõ họ tên và đóng dấu)</p>
               </div>
-              <p className="font-bold uppercase text-slate-800">{project?.owner}</p>
+              <p className="font-bold uppercase text-black text-[9pt]">{project?.owner}</p>
             </div>
           </div>
 
-          {/* Footer Page */}
-          <div className="pt-6 text-center text-[11px] text-slate-400 no-print">
-            Trang 1
+          {/* Page Footer */}
+          <div className="pt-6 text-center text-[7.5pt] italic text-slate-500 signature-block">
+            Trang 1/1 - Mẫu Phụ lục 03.a/TT theo Nghị định số 254/2025/NĐ-CP
           </div>
 
         </div>

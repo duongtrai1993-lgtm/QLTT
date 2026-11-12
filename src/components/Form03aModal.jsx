@@ -639,60 +639,77 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
           </div>
 
           {/* 6 Mục Tổng Hợp Số Liệu - Định Dạng Chuẩn Văn Bản Hành Chính (100% Chữ Đen, Không Dùng Khung Màu Web) */}
-          <div className="pt-3 text-[8.5pt] leading-normal text-black summary-block space-y-0.5 font-['Times_New_Roman',Times,serif]">
+          <div className="pt-4 text-[8.5pt] leading-normal text-black summary-block space-y-1 font-['Times_New_Roman',Times,serif]">
             <p>
-              <strong>1. Giá trị tạm ứng còn lại chưa thu hồi đến hết kỳ trước:</strong> {formatVND(advanceRemainingPrev)}
+              <strong>1. Giá trị tạm ứng còn lại chưa thu hồi đến hết kỳ trước:</strong> {formatNumber(advanceRemainingPrev)} đồng
             </p>
             <p>
-              <strong>2. Số tiền đã thanh toán khối lượng hoàn thành đến hết kỳ trước:</strong> {formatVND(prevCompletedPaidTotal)}
+              <strong>2. Số tiền đã thanh toán khối lượng hoàn thành đến hết kỳ trước:</strong> {formatNumber(prevCompletedPaidTotal)} đồng
             </p>
             <p className="pl-6">
-              2.1. Thanh toán cho nhà thầu: {formatVND(prevPaidContractor)}
+              2.1. Thanh toán cho nhà thầu: {formatNumber(prevPaidContractor)} đồng
             </p>
             <p className="pl-6">
-              2.2. Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): {formatVND(prevRetentionFund)}
+              2.2. Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): {formatNumber(prevRetentionFund)} đồng
             </p>
             <p className="pl-6">
-              2.3. Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 ₫
+              2.3. Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 đồng
             </p>
             <p>
-              <strong>3. Luỹ kế giá trị khối lượng thực hiện đến hết kỳ này:</strong> {formatVND(cumulativeWorkCompleted)}
+              <strong>3. Luỹ kế giá trị khối lượng thực hiện đến hết kỳ này:</strong> {formatNumber(cumulativeWorkCompleted)} đồng
             </p>
             <p>
-              <strong>4. Thanh toán để thu hồi tạm ứng:</strong> {formatVND(advanceRecoveryThisPeriod)}
+              <strong>4. Thanh toán để thu hồi tạm ứng:</strong> {formatNumber(advanceRecoveryThisPeriod)} đồng
             </p>
             <p>
-              <strong>5. Giá trị đề nghị giải ngân kỳ này:</strong> <strong>{formatVND(totalDisbursementRequestedThisPeriod)}</strong>
+              <strong>5. Giá trị đề nghị giải ngân kỳ này:</strong> <strong>{formatNumber(totalDisbursementRequestedThisPeriod)} đồng</strong>
             </p>
             <p className="italic pl-6 text-black">
               Số tiền bằng chữ: <strong className="not-italic">{wordsAmount}</strong> (là số tiền đề nghị giải ngân kỳ này), trong đó:
             </p>
-            <p className="pl-8">- Tạm ứng: 0 ₫</p>
-            <p className="pl-8">- Thanh toán khối lượng hoàn thành: {formatVND(totalDisbursementRequestedThisPeriod)}</p>
-            <p className="pl-12">+ Thanh toán cho nhà thầu: <strong>{formatVND(netPaidToContractorThisPeriod)}</strong></p>
-            <p className="pl-12">+ Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): <strong>{formatVND(retentionThisPeriod)}</strong></p>
-            <p className="pl-12">+ Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 ₫</p>
+            <p className="pl-8">- Tạm ứng: 0 đồng</p>
+            <p className="pl-8">- Thanh toán khối lượng hoàn thành: {formatNumber(totalDisbursementRequestedThisPeriod)} đồng</p>
+            <p className="pl-12">+ Thanh toán cho nhà thầu: <strong>{formatNumber(netPaidToContractorThisPeriod)} đồng</strong></p>
+            <p className="pl-12">+ Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): <strong>{formatNumber(retentionThisPeriod)} đồng</strong></p>
+            <p className="pl-12">+ Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 đồng</p>
             <p>
-              <strong>6. Luỹ kế giá trị giải ngân:</strong> <strong>{formatVND(grandTotalDisbursedCum)}</strong>, trong đó:
+              <strong>6. Luỹ kế giá trị giải ngân:</strong> <strong>{formatNumber(grandTotalDisbursedCum)} đồng</strong>, trong đó:
             </p>
-            <p className="pl-6">6.1. Tạm ứng: {formatVND(totalAdvanceDisbursedCum)}</p>
-            <p className="pl-6">6.2. Thanh toán khối lượng hoàn thành: {formatVND(totalCompletedDisbursedCum)}</p>
-            <p className="pl-10">- Thanh toán cho nhà thầu: {formatVND(Math.round(totalCompletedDisbursedCum * 0.95))}</p>
-            <p className="pl-10">- Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): {formatVND(Math.round(totalCompletedDisbursedCum * 0.05))}</p>
-            <p className="pl-10">- Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 ₫</p>
+            <p className="pl-6">6.1. Tạm ứng: {formatNumber(totalAdvanceDisbursedCum)} đồng</p>
+            <p className="pl-6">6.2. Thanh toán khối lượng hoàn thành: {formatNumber(totalCompletedDisbursedCum)} đồng</p>
+            <p className="pl-10">- Thanh toán cho nhà thầu: {formatNumber(Math.round(totalCompletedDisbursedCum * 0.95))} đồng</p>
+            <p className="pl-10">- Tiền bảo hành công trình (trong trường hợp không bảo lãnh bảo hành công trình): {formatNumber(Math.round(totalCompletedDisbursedCum * 0.05))} đồng</p>
+            <p className="pl-10">- Chuyển vào tài khoản tạm giữ chờ quyết toán: 0 đồng</p>
           </div>
 
-          {/* Exact Legal Signature Block - Khối Chữ Ký Chuẩn Nghị Định 254/2025 */}
-          <div className="pt-6 grid grid-cols-2 text-center text-[8.5pt] gap-8 font-['Times_New_Roman',Times,serif] signature-block leading-normal text-black">
-            <div className="space-y-14">
+          {/* Exact Legal Signature Block - Căn Chỉnh Cân Bằng Tuyệt Đối Chuẩn Văn Thư Nhà Nước */}
+          <div className="pt-8 grid grid-cols-2 text-center text-[8.5pt] gap-10 font-['Times_New_Roman',Times,serif] signature-block leading-normal text-black">
+            
+            {/* Cột Trái: ĐẠI DIỆN NHÀ THẦU */}
+            <div className="flex flex-col justify-between min-h-[190px] h-[190px]">
               <div>
-                <p className="font-bold uppercase text-[9pt]">ĐẠI DIỆN NHÀ THẦU (ĐƠN VỊ THỰC HIỆN)</p>
-                <p className="italic text-[8pt] text-black">(Ký, ghi rõ họ tên, chức vụ, đóng dấu)</p>
+                {/* Dòng đệm ẩn tương ứng với dòng Ngày tháng bên phải để 2 chức danh ngang bằng nhau tuyệt đối */}
+                <p className="italic text-[8.5pt] pb-0.5 invisible select-none" aria-hidden="true">
+                  ................., Ngày {new Date().getDate()} tháng {new Date().getMonth() + 1} năm {new Date().getFullYear()}
+                </p>
+                <p className="font-bold uppercase text-[9pt] leading-snug">
+                  ĐẠI DIỆN NHÀ THẦU (ĐƠN VỊ THỰC HIỆN)
+                </p>
+                <p className="italic text-[8pt] text-black pt-0.5">
+                  (Ký, ghi rõ họ tên, chức vụ, đóng dấu)
+                </p>
               </div>
-              <p className="font-bold uppercase text-black text-[9pt]">{contract?.contractor}</p>
+
+              {/* Tên đơn vị / Họ tên người ký ở đáy - Đồng bộ chân đế thẳng hàng ngang tuyệt đối */}
+              <div className="min-h-[44px] flex items-end justify-center">
+                <p className="font-bold uppercase text-black text-[9pt] leading-tight">
+                  {contract?.contractor}
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-14">
+            {/* Cột Phải: CHỦ ĐẦU TƯ / BAN QLDA */}
+            <div className="flex flex-col justify-between min-h-[190px] h-[190px]">
               <div>
                 <p className="italic text-black pb-0.5 text-[8.5pt]">
                   ................., Ngày {new Date().getDate()} tháng {new Date().getMonth() + 1} năm {new Date().getFullYear()}
@@ -702,15 +719,24 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
                   ĐƠN VỊ, TỔ CHỨC LÀM NHIỆM VỤ<br />
                   BỒI THƯỜNG, HỖ TRỢ TÁI ĐỊNH CƯ
                 </p>
-                <p className="italic text-[8pt] text-black">(Ký, ghi rõ họ tên và đóng dấu)</p>
+                <p className="italic text-[8pt] text-black pt-0.5">
+                  (Ký, ghi rõ họ tên và đóng dấu)
+                </p>
               </div>
-              <p className="font-bold uppercase text-black text-[9pt]">{project?.owner}</p>
+
+              {/* Tên chủ đầu tư ở đáy - Căn đồng bộ chân đế thẳng hàng ngang tuyệt đối */}
+              <div className="min-h-[44px] flex items-end justify-center">
+                <p className="font-bold uppercase text-black text-[9pt] leading-tight">
+                  {project?.owner}
+                </p>
+              </div>
             </div>
+
           </div>
 
           {/* Page Footer */}
-          <div className="pt-6 text-center text-[7.5pt] italic text-slate-500 signature-block">
-            Trang 1/1 - Mẫu Phụ lục 03.a/TT theo Nghị định số 254/2025/NĐ-CP
+          <div className="pt-6 mt-6 border-t border-slate-300 text-center text-[7.5pt] italic text-slate-500 signature-block">
+            Trang 1/1 - Mẫu Phụ lục 03.a/TT ban hành kèm theo Nghị định số 254/2025/NĐ-CP của Chính phủ
           </div>
 
         </div>

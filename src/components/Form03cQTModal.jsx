@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Printer, FileSpreadsheet, Sliders, Check, ZoomIn, ZoomOut, RotateCcw, LayoutTemplate } from 'lucide-react';
-import { formatVND, formatNumber, formatDate, numberToVietnameseWords } from '../services/storageService';
+import { formatVND, formatNumber, formatDate, numberToVietnameseWords, storageService } from '../services/storageService';
 import { SAMPLE_FORM_03A_SECTIONS } from '../data/sampleData';
 
 /**
@@ -28,8 +28,8 @@ export function Form03cQTModal({ isOpen, onClose, payment, contract, project }) 
   const [zoomLevel, setZoomLevel] = useState(100);
   const [showConfig, setShowConfig] = useState(true);
 
-  // Lấy dữ liệu từ các mục 03.a có sẵn để tính quyết toán
-  const sections = SAMPLE_FORM_03A_SECTIONS;
+  // Lấy dữ liệu từ các mục đầu việc thực tế của hợp đồng hoặc mẫu
+  const sections = storageService.getSectionsForPayment(contract?.id, payment) || SAMPLE_FORM_03A_SECTIONS;
   const allItems = sections.flatMap(s => s.items);
 
   // Tổng hợp số liệu quyết toán

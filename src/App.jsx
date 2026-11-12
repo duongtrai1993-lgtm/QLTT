@@ -15,6 +15,7 @@ import { Form03cQTModal } from './components/Form03cQTModal';
 import { Form04aModal } from './components/Form04aModal';
 import { ProjectModal } from './components/ProjectModal';
 import { ContractModal } from './components/ContractModal';
+import { WorkItemsModal } from './components/WorkItemsModal';
 
 export default function App() {
   const [projects, setProjects] = useState([]);
@@ -41,6 +42,7 @@ export default function App() {
 
   const [isContractModalOpen, setIsContractModalOpen] = useState(false);
   const [editingContract, setEditingContract] = useState(null);
+  const [selectedContractForWorkItems, setSelectedContractForWorkItems] = useState(null);
 
   // Load initial data
   useEffect(() => {
@@ -258,6 +260,7 @@ export default function App() {
               payments={payments}
               onOpenNewContract={() => { setEditingContract(null); setIsContractModalOpen(true); }}
               onEditContract={(c) => { setEditingContract(c); setIsContractModalOpen(true); }}
+              onManageWorkItems={(c) => setSelectedContractForWorkItems(c)}
               onNavigateToPayments={(contractId) => {
                 setCurrentTab('payments');
               }}
@@ -351,6 +354,16 @@ export default function App() {
         onSave={handleSaveContract}
         projects={projects}
         editingContract={editingContract}
+      />
+
+      <WorkItemsModal
+        isOpen={Boolean(selectedContractForWorkItems)}
+        onClose={() => setSelectedContractForWorkItems(null)}
+        contract={selectedContractForWorkItems}
+        onSaved={() => {
+          // Triggers re-renders when work items are modified
+          setContracts([...storageService.getContracts()]);
+        }}
       />
 
     </div>

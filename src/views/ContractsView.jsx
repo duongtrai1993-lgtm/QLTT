@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { Plus, FileSignature, ShieldCheck, AlertCircle, Edit2, ArrowRight } from 'lucide-react';
+import { Plus, FileSignature, ShieldCheck, AlertCircle, Edit2, ArrowRight, FileText } from 'lucide-react';
 import { formatVND, formatBillion, formatDate, calculateContractStats } from '../services/storageService';
 
 export function ContractsView({
@@ -8,6 +8,7 @@ export function ContractsView({
   payments,
   onOpenNewContract,
   onEditContract,
+  onManageWorkItems,
   onNavigateToPayments
 }) {
   return (
@@ -65,6 +66,15 @@ export function ContractsView({
                 </div>
 
                 <div className="flex items-center gap-2 self-start lg:self-center">
+                  <button
+                    onClick={() => onManageWorkItems(contract)}
+                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl transition text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                    title="Quản lý, thêm, sửa, xóa các đầu việc của hợp đồng này"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Danh Mục Đầu Việc</span>
+                  </button>
+
                   <button
                     onClick={() => onEditContract(contract)}
                     className="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-xl transition text-xs font-semibold flex items-center gap-1"

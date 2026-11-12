@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Printer, FileSpreadsheet, Sliders, Check, ZoomIn, ZoomOut, RotateCcw, LayoutTemplate } from 'lucide-react';
-import { formatVND, formatNumber, formatDate, numberToVietnameseWords } from '../services/storageService';
+import { formatVND, formatNumber, formatDate, numberToVietnameseWords, storageService } from '../services/storageService';
 import { exportService } from '../services/exportService';
 import { SAMPLE_FORM_03A_SECTIONS } from '../data/sampleData';
 
@@ -36,7 +36,7 @@ export function Form03aModal({ isOpen, onClose, payment, contract, project }) {
     }
   };
 
-  const sections = SAMPLE_FORM_03A_SECTIONS;
+  const sections = storageService.getSectionsForPayment(contract?.id, payment) || SAMPLE_FORM_03A_SECTIONS;
   const allItems = sections.flatMap(s => s.items);
 
   const totalContractVal = allItems.reduce((s, i) => s + (Number(i.contractVal) || 0), 0);

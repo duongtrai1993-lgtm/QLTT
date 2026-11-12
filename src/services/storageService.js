@@ -1,11 +1,13 @@
-﻿import { INITIAL_PROJECTS, INITIAL_CONTRACTS, INITIAL_PAYMENTS, INITIAL_DOCUMENTS, INITIAL_CHECKLIST_TEMPLATE } from '../data/sampleData';
+﻿import { INITIAL_PROJECTS, INITIAL_CONTRACTS, INITIAL_PAYMENTS, INITIAL_DOCUMENTS, INITIAL_CHECKLIST_TEMPLATE, SAMPLE_FORM_03A_SECTIONS } from '../data/sampleData';
 
 const STORAGE_KEYS = {
   PROJECTS: 'qltt_projects_v1',
   CONTRACTS: 'qltt_contracts_v1',
   PAYMENTS: 'qltt_payments_v1',
   DOCUMENTS: 'qltt_documents_v1',
-  CHECKLIST_TEMPLATE: 'qltt_checklist_template_v1'
+  CHECKLIST_TEMPLATE: 'qltt_checklist_template_v1',
+  WORK_ITEMS_PREFIX: 'qltt_work_items_',
+  PAYMENT_ITEMS_PREFIX: 'qltt_pay_items_'
 };
 
 export const storageService = {
@@ -61,11 +63,102 @@ export const storageService = {
     return INITIAL_CHECKLIST_TEMPLATE;
   },
 
+  // 1. Quản lý danh mục đầu việc theo hợp đồng
+  getWorkItems(contractId) {
+    if (!contractId) return [];
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.WORK_ITEMS_PREFIX + contractId);
+      if (data) return JSON.parse(data);
+
+      // Nếu là gói thầu cont-1 mẫu: khởi tạo từ SAMPLE_FORM_03A_SECTIONS
+      if (contractId === 'cont-1') {
+        localStorage.setItem(STORAGE_KEYS.WORK_ITEMS_PREFIX + contractId, JSON.stringify(SAMPLE_FORM_03A_SECTIONS));
+        return SAMPLE_FORM_03A_SECTIONS;
+      }
+
+      // Khởi tạo 4 phân nhóm chuẩn Nghị định 254/2025/NĐ-CP
+      const defaultSections = [
+        { sectionCode: "I", sectionName: "Công việc thực hiện thông qua hợp đồng", items: [] },
+        { sectionCode: "II", sectionName: "Công việc thực hiện không thông qua hợp đồng (không bao gồm kinh phí bồi thường, hỗ trợ, tái định cư, không bao gồm chi phí quản lý dự án)", items: [] },
+        { sectionCode: "III", sectionName: "Chi phí đảm bảo cho việc tổ chức thực hiện bồi thường, hỗ trợ, tái định cư", items: [] },
+        { sectionCode: "IV", sectionName: "Chi phí quản lý dự án", items: [] }
+      ];
+      return defaultSections;
+    } catch {
+      return contractId === 'cont-1' ? SAMPLE_FORM_03A_SECTIONS : [];
+    }
+  },
+
+  saveWorkItems(contractId, sections) {
+    if (!contractId) return;
+    localStorage.setItem(STORAGE_KEYS.WORK_ITEMS_PREFIX + contractId, JSON.stringify(sections));
+  },
+
+  // 2. Quản lý chi tiết khối lượng nghiệm thu từng đợt thanh toán
+  getPaymentWorkItems(paymentId) {
+    if (!paymentId) return null;
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.PAYMENT_ITEMS_PREFIX + paymentId);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  savePaymentWorkItems(paymentId, items) {
+    if (!paymentId) return;
+    localStorage.setItem(STORAGE_KEYS.PAYMENT_ITEMS_PREFIX + paymentId, JSON.stringify(items));
+  },
+
+  // 3. Tính toán và hợp nhất dữ liệu cho Mẫu 03.a/TT và 03.c/QT
+  getSectionsForPayment(contractId, payment) {
+    const baseSections = this.getWorkItems(contractId);
+    if (!baseSections || baseSections.length === 0) {
+      return SAMPLE_FORM_03A_SECTIONS;
+    }
+
+    const paymentItems = payment?.id ? this.getPaymentWorkItems(payment.id) : null;
+
+    // Nếu đợt này đã có dữ liệu khối lượng nghiệm thu nhập tay:
+    if (paymentItems && Array.isArray(paymentItems)) {
+      return baseSections.map(sec => ({
+        ...sec,
+        items: sec.items.map(it => {
+          const matched = paymentItems.find(p => (p.jobCode === it.jobCode || p.stt === it.stt || p.id === it.id));
+          if (!matched) return it;
+
+          const acceptedQty = Number(matched.thisPeriodAcceptedQty) || 0;
+          const unitPrice = Number(it.unitPriceContract) || 0;
+          const acceptedVal = acceptedQty * unitPrice;
+          const prevPaidQty = Number(it.prevPaidQty) || 0;
+          const prevPaidVal = Number(it.prevPaidVal) || 0;
+          const cumulativeQty = prevPaidQty + acceptedQty;
+          const cumulativeVal = prevPaidVal + acceptedVal;
+
+          return {
+            ...it,
+            thisPeriodAcceptedQty: acceptedQty,
+            thisPeriodRequestedQty: acceptedQty,
+            thisPeriodAcceptedVal: acceptedVal,
+            thisPeriodRequestedVal: acceptedVal,
+            totalCumulativeQty: cumulativeQty,
+            totalPaidToDateVal: cumulativeVal,
+            note: matched.note !== undefined ? matched.note : it.note
+          };
+        })
+      }));
+    }
+
+    // Nếu chưa có dữ liệu riêng: trả về baseSections
+    return baseSections;
+  },
+
   resetToDefault() {
     localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(INITIAL_PROJECTS));
     localStorage.setItem(STORAGE_KEYS.CONTRACTS, JSON.stringify(INITIAL_CONTRACTS));
     localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify(INITIAL_PAYMENTS));
     localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(INITIAL_DOCUMENTS));
+    localStorage.removeItem(STORAGE_KEYS.WORK_ITEMS_PREFIX + 'cont-1');
   }
 };
 

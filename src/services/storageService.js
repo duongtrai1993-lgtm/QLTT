@@ -15,19 +15,19 @@
 } from '../data/sampleData';
 
 const STORAGE_KEYS = {
-  PROJECTS: 'qltt_projects_v1',
-  CONTRACTS: 'qltt_contracts_v1',
-  PAYMENTS: 'qltt_payments_v1',
-  DOCUMENTS: 'qltt_documents_v1',
-  CHECKLIST_TEMPLATE: 'qltt_checklist_template_v1',
-  WORK_ITEMS_PREFIX: 'qltt_work_items_',
-  PAYMENT_ITEMS_PREFIX: 'qltt_pay_items_',
-  TEAMS: 'qltt_teams_v1',
-  TEAM_BOQ: 'qltt_team_boq_v1',
-  TEAM_TRANSACTIONS: 'qltt_team_transactions_v1',
-  TEAM_PAYMENTS: 'qltt_team_payments_v1',
-  GSHEET_CONFIGS: 'qltt_gsheet_configs_v1',
-  GSHEET_SYNC_LOGS: 'qltt_gsheet_sync_logs_v1'
+  PROJECTS: 'qltt_projects_v2',
+  CONTRACTS: 'qltt_contracts_v2',
+  PAYMENTS: 'qltt_payments_v2',
+  DOCUMENTS: 'qltt_documents_v2',
+  CHECKLIST_TEMPLATE: 'qltt_checklist_template_v2',
+  WORK_ITEMS_PREFIX: 'qltt_work_items_v2_',
+  PAYMENT_ITEMS_PREFIX: 'qltt_pay_items_v2_',
+  TEAMS: 'qltt_teams_v2',
+  TEAM_BOQ: 'qltt_team_boq_v2',
+  TEAM_TRANSACTIONS: 'qltt_team_transactions_v2',
+  TEAM_PAYMENTS: 'qltt_team_payments_v2',
+  GSHEET_CONFIGS: 'qltt_gsheet_configs_v2',
+  GSHEET_SYNC_LOGS: 'qltt_gsheet_sync_logs_v2'
 };
 
 export const storageService = {

@@ -94,7 +94,8 @@ export default function App() {
     alertCount: visibleContracts.filter(c => c.guaranteeExpiry || c.advanceGuaranteeExpiry).length,
     totalDisbursed,
     disbursedRate: totalContractVal > 0 ? (totalDisbursed / totalContractVal) * 100 : 0,
-    advanceRemaining
+    advanceRemaining,
+    teamCount: storageService.getTeams().length
   };
 
   // Payment CRUD

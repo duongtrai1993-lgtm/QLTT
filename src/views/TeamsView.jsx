@@ -2,18 +2,22 @@ import React, { useState } from 'react';
 import { 
   Users, HardHat, DollarSign, ArrowUpRight, ArrowDownRight, TrendingUp, 
   Plus, Calendar, AlertTriangle, ShieldCheck, FileSpreadsheet, CheckCircle2, 
-  Filter, Search, ArrowRight, Printer, Receipt, Wallet, Layers, Eye
+  Filter, Search, ArrowRight, Printer, Receipt, Wallet, Layers, Eye, FileText, ChevronRight
 } from 'lucide-react';
 import { storageService, formatVND, formatNumber, formatDate } from '../services/storageService';
+import { FormTeamPaymentTrang1Modal } from '../components/FormTeamPaymentTrang1Modal';
 
 export function TeamsView({ projects = [], contracts = [] }) {
   const [teams, setTeams] = useState(() => storageService.getTeams());
   const [teamBOQ, setTeamBOQ] = useState(() => storageService.getTeamBOQ());
   const [transactions, setTransactions] = useState(() => storageService.getTeamTransactions());
   const [teamPayments, setTeamPayments] = useState(() => storageService.getTeamPayments());
+  const [teamPaymentDetails, setTeamPaymentDetails] = useState(() => storageService.getTeamPaymentDetails());
 
   const [activeTab, setActiveTab] = useState('list'); // 'list' | 'boq_margin' | 'transactions' | 'payments'
   const [selectedTeamFilter, setSelectedTeamFilter] = useState('all');
+  const [paymentSubView, setPaymentSubView] = useState('trang1'); // 'trang1' (Bước 3) | 'details' (Bước 1 & 2)
+  const [selectedTeamPaymentForModal, setSelectedTeamPaymentForModal] = useState(null);
 
   // Form thêm giao dịch ứng/phạt
   const [showAddTrans, setShowAddTrans] = useState(false);
@@ -448,74 +452,218 @@ export function TeamsView({ projects = [], contracts = [] }) {
         </div>
       )}
 
-      {/* TAB 4: BẢNG LƯƠNG & QUYẾT TOÁN TỔ ĐỘI THEO KỲ */}
+      {/* TAB 4: QUY TRÌNH THANH TOÁN TỔ ĐỘI 3 BƯỚC */}
       {activeTab === 'payments' && (
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden space-y-4 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+          
+          {/* Header & Sub-tab navigation */}
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold rounded">Đợt 13</span>
-                <h3 className="font-extrabold text-slate-900 text-base">Bảng Quyết Toán Lương Tổ Đội (Tháng 09/2026)</h3>
+                <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-bold rounded">Đợt 13</span>
+                <h3 className="font-extrabold text-slate-900 text-base">
+                  Quy Trình Thanh Toán Lương Khoán Tổ Đội (Tháng 09/2026)
+                </h3>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Gắn liền với kỳ thanh toán Hòa Bình số 20261019054706 • Đã trừ tiền ứng tuần & 5% bảo hành
+                Gắn liền với kỳ thanh toán Hòa Bình số 20261019054706 • Chuẩn hóa theo Quy trình 3 Bước
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500">Tổng thực chi 3 tổ:</span>
-              <span className="text-lg font-black text-blue-700">{formatVND(totalNetPaidLabor)}</span>
+            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+              <button
+                onClick={() => setPaymentSubView('trang1')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  paymentSubView === 'trang1'
+                    ? 'bg-white text-indigo-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Bước 3: Đề Nghị Thanh Toán (Trang 1)</span>
+              </button>
+
+              <button
+                onClick={() => setPaymentSubView('details')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  paymentSubView === 'details'
+                    ? 'bg-white text-indigo-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Bước 1 & 2: Tổng Hợp Khối Lượng & Giá Trị</span>
+              </button>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                <tr>
-                  <th className="px-3 py-3">Tổ Đội</th>
-                  <th className="px-3 py-3">Đội Trưởng</th>
-                  <th className="px-3 py-3 text-right">Tổng Khối Lượng (VND)</th>
-                  <th className="px-3 py-3 text-right">Trừ Tạm Ứng Tuần</th>
-                  <th className="px-3 py-3 text-right">Trừ Vật Tư & BHLĐ</th>
-                  <th className="px-3 py-3 text-right">Trừ Phạt ATLĐ</th>
-                  <th className="px-3 py-3 text-right">Giữ Lại 5% BH</th>
-                  <th className="px-4 py-3 text-right">THỰC CHI ĐỢT NÀY</th>
-                  <th className="px-3 py-3 text-center">Trạng Thái</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {teamPayments.map(p => (
-                  <tr key={p.teamPayId} className="hover:bg-slate-50 transition">
-                    <td className="px-3 py-3.5 font-bold text-slate-900">{p.teamName}</td>
-                    <td className="px-3 py-3.5 text-slate-700">{p.leaderName}</td>
-                    <td className="px-3 py-3.5 text-right font-mono font-bold text-slate-800">
-                      {formatVND(p.grossAmount)}
-                    </td>
-                    <td className="px-3 py-3.5 text-right font-mono text-amber-700">
-                      -{formatVND(p.cashAdvance)}
-                    </td>
-                    <td className="px-3 py-3.5 text-right font-mono text-slate-600">
-                      -{formatVND(p.deductMaterial + p.deductPpe)}
-                    </td>
-                    <td className="px-3 py-3.5 text-right font-mono text-rose-600">
-                      {p.deductViolation > 0 ? `-${formatVND(p.deductViolation)}` : '0 đ'}
-                    </td>
-                    <td className="px-3 py-3.5 text-right font-mono text-slate-600">
-                      -{formatVND(p.retentionAmount)}
-                    </td>
-                    <td className="px-4 py-3.5 text-right font-mono font-black text-sm text-blue-700 bg-blue-50/40">
-                      {formatVND(p.netPaid)}
-                    </td>
-                    <td className="px-3 py-3.5 text-center">
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-[10px]">
-                        Đã duyệt chi
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {/* SUB-VIEW 1: BƯỚC 3 - TRANG 1 ĐỀ NGHỊ THANH TOÁN (BẢNG 9) */}
+          {paymentSubView === 'trang1' && (
+            <div className="space-y-4">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="px-3 py-3 text-center">Mã Đợt (team_pay_id)</th>
+                      <th className="px-3 py-3">Tổ Đội & Đội Trưởng</th>
+                      <th className="px-3 py-3 text-right">[1] Lũy Kế Nghiệm Thu (VND)</th>
+                      <th className="px-3 py-3 text-right">[2] LK Đã Đề Nghị Trước</th>
+                      <th className="px-3 py-3 text-right">Tổng Khấu Trừ Đến Trước [10]</th>
+                      <th className="px-3 py-3 text-right">[11] Đề Nghị Kỳ Này</th>
+                      <th className="px-3 py-3 text-right">[12] Khấu Trừ Kỳ Này</th>
+                      <th className="px-4 py-3 text-right bg-emerald-50 text-emerald-900">THỰC THANH TOÁN KỲ NÀY</th>
+                      <th className="px-3 py-3 text-center">Trạng Thái</th>
+                      <th className="px-3 py-3 text-center w-28">Thao Tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {teamPayments.map(p => {
+                      const totalPrevDeduct = 
+                        (p.prev_deduct_mat || 0) + 
+                        (p.prev_deduct_ppe || 0) + 
+                        (p.prev_deduct_penalty || 0) + 
+                        (p.prev_hold_amount || 0) + 
+                        (p.cum_retention || 0) + 
+                        (p.cum_cash_advance || 0) +
+                        (p.prev_paid_val || 0);
+
+                      const currTotalDeduct = 
+                        (p.curr_deduct_mat || 0) + 
+                        (p.curr_deduct_ppe || 0) + 
+                        (p.curr_deduct_penalty || 0) + 
+                        (p.curr_hold_amount || 0);
+
+                      const currGross = Math.max(0, (p.cum_accepted_val || 0) - totalPrevDeduct);
+
+                      return (
+                        <tr key={p.team_pay_id || p.teamPayId} className="hover:bg-slate-50 transition">
+                          <td className="px-3 py-3.5 text-center font-mono font-bold text-slate-700">
+                            {p.team_pay_id || p.teamPayId}
+                          </td>
+                          <td className="px-3 py-3.5">
+                            <p className="font-bold text-slate-900">{p.team_name || p.teamName}</p>
+                            <p className="text-[11px] text-slate-500">Đội trưởng: {p.leader_name || p.leaderName}</p>
+                          </td>
+                          <td className="px-3 py-3.5 text-right font-mono font-bold text-indigo-700">
+                            {formatVND(p.cum_accepted_val || p.grossAmount)}
+                          </td>
+                          <td className="px-3 py-3.5 text-right font-mono text-slate-600">
+                            {formatVND(p.prev_paid_val || 0)}
+                          </td>
+                          <td className="px-3 py-3.5 text-right font-mono text-slate-600">
+                            -{formatVND(totalPrevDeduct)}
+                          </td>
+                          <td className="px-3 py-3.5 text-right font-mono font-semibold text-blue-700">
+                            {formatVND(currGross || p.grossAmount)}
+                          </td>
+                          <td className="px-3 py-3.5 text-right font-mono text-rose-600">
+                            -{formatVND(currTotalDeduct || (p.cashAdvance + p.deductMaterial + p.deductPpe))}
+                          </td>
+                          <td className="px-4 py-3.5 text-right font-mono font-black text-sm text-emerald-700 bg-emerald-50/50">
+                            {formatVND(p.net_payable || p.netPaid)}
+                          </td>
+                          <td className="px-3 py-3.5 text-center">
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-[10px]">
+                              {p.status || 'APPROVED'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3.5 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => setSelectedTeamPaymentForModal(p)}
+                                title="Xem & In Bảng Đề Nghị Thanh Toán (Trang 1 - A4)"
+                                className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-bold transition flex items-center gap-1 shadow-sm"
+                              >
+                                <Printer className="w-3.5 h-3.5 text-indigo-700" />
+                                <span className="text-[10px]">Trang 1</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* SUB-VIEW 2: BƯỚC 1 & 2 - TỔNG HỢP KHỐI LƯỢNG & GIÁ TRỊ (BẢNG 10) */}
+          {paymentSubView === 'details' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <span className="font-semibold">
+                  Bảng tổng hợp chi tiết theo từng đầu việc giao khoán (team_payment_details)
+                </span>
+                <span className="font-bold text-indigo-700">
+                  Tổng 4 công việc hoàn thành kỳ này
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse border border-slate-200">
+                  <thead className="bg-slate-100 text-slate-800 font-bold uppercase text-[10px]">
+                    <tr>
+                      <th className="border border-slate-200 px-3 py-2 text-center" rowSpan={2}>STT</th>
+                      <th className="border border-slate-200 px-3 py-2 text-center" rowSpan={2}>Mã Hiệu</th>
+                      <th className="border border-slate-200 px-4 py-2" rowSpan={2}>Tên Nội Dung Công Việc Giao Khoán</th>
+                      <th className="border border-slate-200 px-2 py-2 text-center" rowSpan={2}>ĐVT</th>
+                      <th className="border border-slate-200 px-3 py-2 text-right" rowSpan={2}>Đơn Giá Giao Khoán</th>
+                      <th className="border border-slate-200 px-3 py-2 text-center bg-blue-50 text-blue-900" colSpan={3}>
+                        Bước 1: Khối Lượng Nghiệm Thu
+                      </th>
+                      <th className="border border-slate-200 px-3 py-2 text-center bg-emerald-50 text-emerald-900" colSpan={3}>
+                        Bước 2: Giá Trị Nghiệm Thu (VND)
+                      </th>
+                      <th className="border border-slate-200 px-3 py-2 text-center bg-amber-50 text-amber-900" colSpan={2}>
+                        Phần Còn Lại Của HĐ
+                      </th>
+                    </tr>
+                    <tr>
+                      <th className="border border-slate-200 px-2 py-1.5 text-right bg-blue-50/60 text-blue-900">LK Trước</th>
+                      <th className="border border-slate-200 px-2 py-1.5 text-right bg-blue-100 text-blue-950 font-black">Kỳ Này</th>
+                      <th className="border border-slate-200 px-2 py-1.5 text-right bg-blue-50/60 text-blue-900">LK Đến Nay</th>
+
+                      <th className="border border-slate-200 px-3 py-1.5 text-right bg-emerald-50/60 text-emerald-900">GT LK Trước</th>
+                      <th className="border border-slate-200 px-3 py-1.5 text-right bg-emerald-100 text-emerald-950 font-black">GT Kỳ Này</th>
+                      <th className="border border-slate-200 px-3 py-1.5 text-right bg-emerald-50/60 text-emerald-900">GT LK Đến Nay</th>
+
+                      <th className="border border-slate-200 px-2 py-1.5 text-right bg-amber-50/60 text-amber-900">KL Còn Lại</th>
+                      <th className="border border-slate-200 px-3 py-1.5 text-right bg-amber-50/60 text-amber-900">GT Còn Lại</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 font-medium">
+                    {teamPaymentDetails.map((det) => (
+                      <tr key={det.team_detail_id} className="hover:bg-slate-50 transition">
+                        <td className="border border-slate-200 px-3 py-2 text-center">{det.stt}</td>
+                        <td className="border border-slate-200 px-3 py-2 text-center font-mono font-bold text-slate-700">{det.item_code}</td>
+                        <td className="border border-slate-200 px-4 py-2 font-semibold text-slate-800">{det.description}</td>
+                        <td className="border border-slate-200 px-2 py-2 text-center font-bold text-slate-600">{det.unit}</td>
+                        <td className="border border-slate-200 px-3 py-2 text-right font-mono font-bold text-slate-900">
+                          {formatNumber(det.unit_price_out)}
+                        </td>
+
+                        {/* Bước 1: Khối lượng */}
+                        <td className="border border-slate-200 px-2 py-2 text-right font-mono text-slate-600">{formatNumber(det.prev_qty)}</td>
+                        <td className="border border-slate-200 px-2 py-2 text-right font-mono font-bold text-blue-700 bg-blue-50/30">{formatNumber(det.curr_qty)}</td>
+                        <td className="border border-slate-200 px-2 py-2 text-right font-mono font-bold text-slate-800">{formatNumber(det.cum_qty)}</td>
+
+                        {/* Bước 2: Giá trị */}
+                        <td className="border border-slate-200 px-3 py-2 text-right font-mono text-slate-600">{formatVND(det.prev_val)}</td>
+                        <td className="border border-slate-200 px-3 py-2 text-right font-mono font-black text-emerald-700 bg-emerald-50/30">{formatVND(det.curr_val)}</td>
+                        <td className="border border-slate-200 px-3 py-2 text-right font-mono font-black text-slate-900">{formatVND(det.cum_val)}</td>
+
+                        {/* Còn lại */}
+                        <td className="border border-slate-200 px-2 py-2 text-right font-mono text-amber-700">{formatNumber(det.rem_qty)}</td>
+                        <td className="border border-slate-200 px-3 py-2 text-right font-mono font-bold text-amber-800">{formatVND(det.rem_val)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
 
@@ -700,6 +848,17 @@ export function TeamsView({ projects = [], contracts = [] }) {
           </div>
         </div>
       )}
+
+      {/* Modal: Đề Nghị Thanh Toán Tổ Đội (Bước 3 - Trang 1 A4) */}
+      <FormTeamPaymentTrang1Modal
+        isOpen={Boolean(selectedTeamPaymentForModal)}
+        onClose={() => setSelectedTeamPaymentForModal(null)}
+        teamPayment={selectedTeamPaymentForModal}
+        onNavigateToDetails={() => {
+          setSelectedTeamPaymentForModal(null);
+          setPaymentSubView('details');
+        }}
+      />
 
     </div>
   );

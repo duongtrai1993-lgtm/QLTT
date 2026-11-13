@@ -9,6 +9,7 @@
   INITIAL_TEAM_BOQ,
   INITIAL_TEAM_TRANSACTIONS,
   INITIAL_TEAM_PAYMENTS,
+  INITIAL_TEAM_PAYMENT_DETAILS,
   INITIAL_GSHEET_CONFIGS,
   INITIAL_GSHEET_SYNC_LOGS,
   NEWTOWN_BOQ_SECTIONS
@@ -26,6 +27,7 @@ const STORAGE_KEYS = {
   TEAM_BOQ: 'qltt_team_boq_v2',
   TEAM_TRANSACTIONS: 'qltt_team_transactions_v2',
   TEAM_PAYMENTS: 'qltt_team_payments_v2',
+  TEAM_PAYMENT_DETAILS: 'qltt_team_payment_details_v2',
   GSHEET_CONFIGS: 'qltt_gsheet_configs_v2',
   GSHEET_SYNC_LOGS: 'qltt_gsheet_sync_logs_v2'
 };
@@ -231,6 +233,20 @@ export const storageService = {
     localStorage.setItem(STORAGE_KEYS.TEAM_PAYMENTS, JSON.stringify(payments));
   },
 
+  // 4b. Chi tiết nghiệm thu khối lượng & giá trị tổ đội (Bước 1 & Bước 2)
+  getTeamPaymentDetails(teamPayId = null) {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.TEAM_PAYMENT_DETAILS);
+      const list = data ? JSON.parse(data) : INITIAL_TEAM_PAYMENT_DETAILS;
+      return teamPayId ? list.filter(d => d.team_pay_id === teamPayId) : list;
+    } catch {
+      return teamPayId ? INITIAL_TEAM_PAYMENT_DETAILS.filter(d => d.team_pay_id === teamPayId) : INITIAL_TEAM_PAYMENT_DETAILS;
+    }
+  },
+  saveTeamPaymentDetails(details) {
+    localStorage.setItem(STORAGE_KEYS.TEAM_PAYMENT_DETAILS, JSON.stringify(details));
+  },
+
   // 5. Cấu hình & Nhật ký Google Sheets
   getGSheetConfigs() {
     try {
@@ -265,6 +281,7 @@ export const storageService = {
     localStorage.setItem(STORAGE_KEYS.TEAM_BOQ, JSON.stringify(INITIAL_TEAM_BOQ));
     localStorage.setItem(STORAGE_KEYS.TEAM_TRANSACTIONS, JSON.stringify(INITIAL_TEAM_TRANSACTIONS));
     localStorage.setItem(STORAGE_KEYS.TEAM_PAYMENTS, JSON.stringify(INITIAL_TEAM_PAYMENTS));
+    localStorage.setItem(STORAGE_KEYS.TEAM_PAYMENT_DETAILS, JSON.stringify(INITIAL_TEAM_PAYMENT_DETAILS));
     localStorage.setItem(STORAGE_KEYS.GSHEET_CONFIGS, JSON.stringify(INITIAL_GSHEET_CONFIGS));
     localStorage.setItem(STORAGE_KEYS.GSHEET_SYNC_LOGS, JSON.stringify(INITIAL_GSHEET_SYNC_LOGS));
     localStorage.removeItem(STORAGE_KEYS.WORK_ITEMS_PREFIX + 'cont-1');

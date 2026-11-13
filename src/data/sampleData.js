@@ -307,45 +307,197 @@ export const INITIAL_TEAM_TRANSACTIONS = [
   }
 ];
 
-// Bảng thanh toán lương 2 Tổ đội theo Đợt 13
+// Bảng 9 (Sửa lại): ĐỀ NGHỊ THANH TOÁN TỔ ĐỘI (Bước 3 - Trang 1)
 export const INITIAL_TEAM_PAYMENTS = [
   {
-    teamPayId: "tpay-13-thep",
-    paymentId: "20261019054706",
-    periodNo: 13,
-    periodName: "Thanh toán Đợt 13 (Kỳ tháng 09/2026)",
-    teamCode: "TD-THEP-01",
-    teamName: "Tổ Thép - Đội Tuấn",
-    leaderName: "Nguyễn Văn Tuấn",
-    fromDate: "2026-09-01",
-    toDate: "2026-09-30",
-    grossAmount: 1160000000,     // Tổng giá trị nghiệm thu kỳ này (400 tấn thép x 2.900đ)
-    cashAdvance: 270000000,     // Tổng tạm ứng tiền mặt trong kỳ (150tr + 120tr)
-    deductMaterial: 15000000,   // Trừ que hàn, đá cắt, kẽm buộc
-    deductPpe: 8000000,         // Trừ BHLĐ
-    deductViolation: 5000000,   // Trừ phạt vi phạm ATLĐ
-    retentionAmount: 58000000,  // Giữ lại bảo hành 5%
-    netPaid: 804000000,         // Thực chi cho Đội trưởng Tuấn
-    status: "APPROVED"
+    team_pay_id: "TD01-20261019-13",
+    team_contract_id: 1,
+    payment_id: "20261019054706",
+    period_no: 13,
+    period_name: "Thanh toán Đợt 13 (Kỳ tháng 09/2026)",
+    team_code: "TD-THEP-01",
+    team_name: "Tổ Thép - Đội Tuấn",
+    leader_name: "Nguyễn Văn Tuấn",
+    from_date: "2026-09-01",
+    to_date: "2026-09-30",
+    status: "APPROVED", // DRAFT, QS_CHECKED, APPROVED, PAID
+
+    // Các chỉ tiêu tài chính y hệt Trang 1 Hồ sơ Thầu phụ
+    cum_accepted_val: 15440000000,    // [1] Lũy kế GT nghiệm thu đến nay (từ Bước 2)
+    prev_paid_val: 11850000000,       // [2] LK đề nghị TT các kỳ trước
+    prev_deduct_mat: 280000000,       // [3] LK trừ vật tư kỳ trước
+    prev_deduct_ppe: 65000000,        // [4] LK trừ BHLĐ kỳ trước
+    prev_deduct_penalty: 20000000,    // [5] LK trừ phạt ATLĐ/kỹ thuật kỳ trước
+    prev_hold_amount: 150000000,      // [6] LK tạm giữ kỳ trước
+    cum_retention: 772000000,         // [7] LK % bảo lưu đến nay (5%)
+    cum_cash_advance: 1200000000,     // [8] LK tạm ứng tiền mặt/lương tuần
+
+    // Các khoản trừ kỳ này [12]
+    curr_deduct_mat: 15000000,        // [12a] Trừ vật tư kỳ này
+    curr_deduct_ppe: 8000000,         // [12b] Trừ BHLĐ kỳ này
+    curr_deduct_penalty: 5000000,     // [12c] Trừ phạt kỳ này
+    curr_hold_amount: 11000000,       // [12d] Tạm giữ kỳ này
+
+    net_payable: 804000000,           // Giá trị thực thanh toán kỳ này
+    amount_in_words: "Tám trăm linh bốn triệu đồng chẵn",
+    created_at: "2026-10-19T14:00:00Z",
+
+    // Tương thích thêm với các trường hiển thị cũ
+    grossAmount: 1160000000,
+    cashAdvance: 270000000,
+    deductMaterial: 15000000,
+    deductPpe: 8000000,
+    deductViolation: 5000000,
+    retentionAmount: 58000000,
+    netPaid: 804000000
   },
   {
-    teamPayId: "tpay-13-coffa",
-    paymentId: "20261019054706",
-    periodNo: 13,
-    periodName: "Thanh toán Đợt 13 (Kỳ tháng 09/2026)",
-    teamCode: "TD-COFFA-02",
-    teamName: "Tổ Coffa - Đội Hải",
-    leaderName: "Trần Đình Hải",
-    fromDate: "2026-09-01",
-    toDate: "2026-09-30",
-    grossAmount: 1450000000,     // Nghiệm thu 11.600m2 ván khuôn x 125.000đ
+    team_pay_id: "TD02-20261019-13",
+    team_contract_id: 2,
+    payment_id: "20261019054706",
+    period_no: 13,
+    period_name: "Thanh toán Đợt 13 (Kỳ tháng 09/2026)",
+    team_code: "TD-COFFA-02",
+    team_name: "Tổ Coffa - Đội Hải",
+    leader_name: "Trần Đình Hải",
+    from_date: "2026-09-01",
+    to_date: "2026-09-30",
+    status: "APPROVED",
+
+    // Các chỉ tiêu tài chính y hệt Trang 1 Hồ sơ Thầu phụ
+    cum_accepted_val: 21350000000,    // [1] Lũy kế GT nghiệm thu đến nay (từ Bước 2)
+    prev_paid_val: 16500000000,       // [2] LK đề nghị TT các kỳ trước
+    prev_deduct_mat: 320000000,       // [3] LK trừ vật tư kỳ trước
+    prev_deduct_ppe: 85000000,        // [4] LK trừ BHLĐ kỳ trước
+    prev_deduct_penalty: 15000000,    // [5] LK trừ phạt ATLĐ/kỹ thuật kỳ trước
+    prev_hold_amount: 200000000,      // [6] LK tạm giữ kỳ trước
+    cum_retention: 1067500000,        // [7] LK % bảo lưu đến nay (5%)
+    cum_cash_advance: 1800000000,     // [8] LK tạm ứng tiền mặt/lương tuần
+
+    // Các khoản trừ kỳ này [12]
+    curr_deduct_mat: 25000000,        // [12a] Trừ vật tư kỳ này
+    curr_deduct_ppe: 12500000,        // [12b] Trừ BHLĐ kỳ này
+    curr_deduct_penalty: 0,           // [12c] Trừ phạt kỳ này
+    curr_hold_amount: 335000000,      // [12d] Tạm giữ kỳ này
+
+    net_payable: 990000000,           // Giá trị thực thanh toán kỳ này
+    amount_in_words: "Chín trăm chín mươi triệu đồng chẵn",
+    created_at: "2026-10-19T14:30:00Z",
+
+    grossAmount: 1450000000,
     cashAdvance: 350000000,
     deductMaterial: 25000000,
     deductPpe: 12500000,
     deductViolation: 0,
     retentionAmount: 72500000,
-    netPaid: 990000000,
-    status: "APPROVED"
+    netPaid: 990000000
+  }
+];
+
+// Bảng 10 (Sửa lại): TỔNG HỢP KHỐI LƯỢNG & GIÁ TRỊ THANH TOÁN TỔ ĐỘI (Bước 1 & Bước 2)
+export const INITIAL_TEAM_PAYMENT_DETAILS = [
+  // 1. Tổ Thép - Đội Tuấn (TD01-20261019-13)
+  {
+    team_detail_id: 1,
+    team_pay_id: "TD01-20261019-13",
+    team_boq_id: "tboq-1",
+    stt: 1,
+    item_code: "2.1.1.1.2.10",
+    description: "Gia công lắp dựng cốt thép dầm sàn Tòa M1, M2 (D10 - D32)",
+    unit: "KG",
+    unit_price_out: 2900,
+    contract_qty: 4850000,
+    
+    // Bước 1: Khối lượng
+    prev_qty: 3600000,
+    curr_qty: 300000,
+    cum_qty: 3900000,
+    
+    // Bước 2: Giá trị
+    prev_val: 10440000000,
+    curr_val: 870000000,
+    cum_val: 11310000000,
+    
+    // Còn lại
+    rem_qty: 950000,
+    rem_val: 2755000000
+  },
+  {
+    team_detail_id: 2,
+    team_pay_id: "TD01-20261019-13",
+    team_boq_id: "tboq-2",
+    stt: 2,
+    item_code: "2.1.1.1.2.11",
+    description: "Gia công lắp dựng cốt thép cột vách lõi thang máy Tòa M1",
+    unit: "KG",
+    unit_price_out: 3200,
+    contract_qty: 1650000,
+    
+    // Bước 1: Khối lượng
+    prev_qty: 1200000,
+    curr_qty: 90625,
+    cum_qty: 1290625,
+    
+    // Bước 2: Giá trị
+    prev_val: 3840000000,
+    curr_val: 290000000,
+    cum_val: 4130000000,
+    
+    // Còn lại
+    rem_qty: 359375,
+    rem_val: 1150000000
+  },
+
+  // 2. Tổ Coffa - Đội Hải (TD02-20261019-13)
+  {
+    team_detail_id: 3,
+    team_pay_id: "TD02-20261019-13",
+    team_boq_id: "tboq-3",
+    stt: 1,
+    item_code: "2.1.2.1.1.05",
+    description: "Lắp dựng và tháo dỡ ván khuôn nhôm sàn căn hộ điển hình",
+    unit: "m2",
+    unit_price_out: 125000,
+    contract_qty: 125000,
+    
+    // Bước 1: Khối lượng
+    prev_qty: 92000,
+    curr_qty: 8000,
+    cum_qty: 100000,
+    
+    // Bước 2: Giá trị
+    prev_val: 11500000000,
+    curr_val: 1000000000,
+    cum_val: 12500000000,
+    
+    // Còn lại
+    rem_qty: 25000,
+    rem_val: 3125000000
+  },
+  {
+    team_detail_id: 4,
+    team_pay_id: "TD02-20261019-13",
+    team_boq_id: "tboq-4",
+    stt: 2,
+    item_code: "2.1.2.1.1.08",
+    description: "Lắp dựng và tháo dỡ ván khuôn cột vách Tòa M1, M2",
+    unit: "m2",
+    unit_price_out: 140000,
+    contract_qty: 85000,
+    
+    // Bước 1: Khối lượng
+    prev_qty: 60000,
+    curr_qty: 3214.2857,
+    cum_qty: 63214.2857,
+    
+    // Bước 2: Giá trị
+    prev_val: 8400000000,
+    curr_val: 450000000,
+    cum_val: 8850000000,
+    
+    // Còn lại
+    rem_qty: 21785.7143,
+    rem_val: 3050000000
   }
 ];
 

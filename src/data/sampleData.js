@@ -867,6 +867,8 @@ export const NEWTOWN_BOQ_SECTIONS = [
     sectionName: "Công tác Bê tông, Cốt thép & Ván khuôn Tòa M1 (Tầng 1 đến Tầng 35)",
     items: [
       {
+        id: "item-m1-1",
+        sectionCode: "I",
         stt: "1",
         jobCode: "2.1.1.1.2.10",
         name: "Gia công lắp dựng cốt thép dầm sàn Tòa M1 (D10 - D32)",
@@ -889,6 +891,8 @@ export const NEWTOWN_BOQ_SECTIONS = [
         note: "Đã KCS nghiệm thu"
       },
       {
+        id: "item-m1-2",
+        sectionCode: "I",
         stt: "2",
         jobCode: "2.1.1.1.2.11",
         name: "Gia công lắp dựng cốt thép cột vách lõi thang máy Tòa M1",
@@ -911,6 +915,8 @@ export const NEWTOWN_BOQ_SECTIONS = [
         note: "Nghiệm thu tầng 20-22"
       },
       {
+        id: "item-m1-3",
+        sectionCode: "I",
         stt: "3",
         jobCode: "2.1.2.1.1.05",
         name: "Lắp dựng và tháo dỡ ván khuôn nhôm sàn căn hộ điển hình Tòa M1",
@@ -933,6 +939,8 @@ export const NEWTOWN_BOQ_SECTIONS = [
         note: "Chu kỳ nhôm 5 ngày"
       },
       {
+        id: "item-m1-4",
+        sectionCode: "I",
         stt: "4",
         jobCode: "2.1.3.1.1.01",
         name: "Đổ và đầm bê tông thương phẩm sàn dầm Tòa M1 (B35)",
@@ -961,6 +969,8 @@ export const NEWTOWN_BOQ_SECTIONS = [
     sectionName: "Công tác Bê tông, Cốt thép & Ván khuôn Tòa M2 (Tầng 1 đến Tầng 35)",
     items: [
       {
+        id: "item-m2-1",
+        sectionCode: "II",
         stt: "1",
         jobCode: "2.2.1.1.2.10",
         name: "Gia công lắp dựng cốt thép dầm sàn Tòa M2 (D10 - D32)",
@@ -983,6 +993,8 @@ export const NEWTOWN_BOQ_SECTIONS = [
         note: "Đã KCS nghiệm thu"
       },
       {
+        id: "item-m2-2",
+        sectionCode: "II",
         stt: "2",
         jobCode: "2.2.2.1.1.05",
         name: "Lắp dựng và tháo dỡ ván khuôn nhôm sàn căn hộ điển hình Tòa M2",

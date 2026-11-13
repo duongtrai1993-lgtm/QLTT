@@ -150,11 +150,17 @@ export const storageService = {
     const paymentItems = payment?.id ? this.getPaymentWorkItems(payment.id) : null;
 
     // Nếu đợt này đã có dữ liệu khối lượng nghiệm thu nhập tay:
-    if (paymentItems && Array.isArray(paymentItems)) {
+    if (paymentItems && Array.isArray(paymentItems) && paymentItems.length > 0) {
       return baseSections.map(sec => ({
         ...sec,
         items: sec.items.map(it => {
-          const matched = paymentItems.find(p => (p.jobCode === it.jobCode || p.stt === it.stt || p.id === it.id));
+          // Khớp chính xác tuyệt đối: ưu tiên jobCode, sau đó đến id hợp lệ, hoặc (sectionCode + stt)
+          const matched = paymentItems.find(p => {
+            if (it.jobCode && p.jobCode && String(it.jobCode).trim() === String(p.jobCode).trim()) return true;
+            if (it.id && p.id && String(it.id).trim() === String(p.id).trim()) return true;
+            if (sec.sectionCode && p.sectionCode && String(sec.sectionCode) === String(p.sectionCode) && String(it.stt) === String(p.stt)) return true;
+            return false;
+          });
           if (!matched) return it;
 
           const acceptedQty = Number(matched.thisPeriodAcceptedQty) || 0;

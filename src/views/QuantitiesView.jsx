@@ -66,6 +66,9 @@ export function QuantitiesView({
 
   const activePayment = payments.find(p => p.id === activePaymentId);
 
+  // Helper xác định mã duy nhất cho từng đầu việc (không bao giờ trùng lặp)
+  const getItemKey = (it, secCode) => it.jobCode || (secCode ? `${secCode}-${it.stt}` : (it.sectionCode ? `${it.sectionCode}-${it.stt}` : it.stt)) || it.id;
+
   // Load danh mục đầu việc của hợp đồng
   useEffect(() => {
     if (!selectedContractId) return;
@@ -78,7 +81,7 @@ export function QuantitiesView({
       if (savedItems && Array.isArray(savedItems)) {
         const qtyMap = {};
         savedItems.forEach(it => {
-          const key = it.jobCode || it.stt || it.id;
+          const key = getItemKey(it, it.sectionCode);
           qtyMap[key] = Number(it.thisPeriodAcceptedQty) || 0;
         });
         setAcceptedQtys(qtyMap);
@@ -87,7 +90,7 @@ export function QuantitiesView({
         const qtyMap = {};
         loaded.forEach(sec => {
           sec.items.forEach(it => {
-            const key = it.jobCode || it.stt || it.id;
+            const key = getItemKey(it, sec.sectionCode);
             qtyMap[key] = Number(it.thisPeriodAcceptedQty) || 0;
           });
         });
@@ -96,11 +99,93 @@ export function QuantitiesView({
     }
   }, [selectedContractId, activePaymentId]);
 
-  // Cập nhật khối lượng khi người dùng gõ vào ô
+  // Hàm tự động lưu và đồng bộ tức thì số liệu sang Mẫu 03.a/TT, 04.a/TT và Hồ sơ thanh toán
+  const persistQuantities = (qtyMap, notify = false) => {
+    if (!activePaymentId || !activePayment) return null;
+
+    let sum = 0;
+    const itemsDetail = [];
+    workSections.forEach(sec => {
+      sec.items.forEach(it => {
+        const key = getItemKey(it, sec.sectionCode);
+        const acceptedQty = Number(qtyMap[key]) || 0;
+        const unitPrice = Number(it.unitPriceContract) || 0;
+        const lineVal = acceptedQty * unitPrice;
+        sum += lineVal;
+
+        const prevPaidQty = Number(it.prevPaidQty) || 0;
+        const prevPaidVal = Number(it.prevPaidVal) || 0;
+        const totalCumQty = prevPaidQty + acceptedQty;
+        const totalCumVal = prevPaidVal + lineVal;
+
+        itemsDetail.push({
+          id: it.id || `item-${sec.sectionCode}-${it.stt}`,
+          sectionCode: sec.sectionCode,
+          stt: it.stt,
+          jobCode: it.jobCode,
+          name: it.name,
+          unit: it.unit,
+          contractQty: it.contractQty,
+          unitPriceContract: unitPrice,
+          unitPriceAdditional: it.unitPriceAdditional || 0,
+          contractVal: it.contractVal,
+          prevUnpaidQty: it.prevUnpaidQty || 0,
+          prevPaidQty: prevPaidQty,
+          thisPeriodAcceptedQty: acceptedQty,
+          totalCumulativeQty: totalCumQty,
+          thisPeriodRequestedQty: acceptedQty,
+          prevUnpaidVal: it.prevUnpaidVal || 0,
+          thisPeriodAcceptedVal: lineVal,
+          thisPeriodRequestedVal: lineVal,
+          thisPeriodUnpaidVal: 0,
+          prevPaidVal: prevPaidVal,
+          totalPaidToDateVal: totalCumVal,
+          note: it.note
+        });
+      });
+    });
+
+    // 1. Lưu chi tiết từng đầu việc để Mẫu 03.a/TT hiển thị chính xác 100%
+    storageService.savePaymentWorkItems(activePaymentId, itemsDetail);
+
+    // 2. Tính toán các chỉ tiêu tài chính
+    const advRec = Math.round(sum * 0.2); // 20% thu hồi tạm ứng
+    const retVal = Math.round(sum * ((activeContract?.retentionRate || 5) / 100)); // 5% bảo lưu
+    const reqAmount = Math.max(0, sum - advRec - retVal);
+    const words = numberToVietnameseWords(reqAmount);
+
+    const updatedPayment = {
+      ...activePayment,
+      workCompletedValue: sum,
+      advanceDeduction: advRec,
+      retentionDeduction: retVal,
+      requestedAmount: reqAmount,
+      approvedAmount: reqAmount,
+      netPayable: reqAmount,
+      amountInWords: words,
+      // Đồng bộ chỉ tiêu tài chính Form Hòa Bình Trang 1
+      cum_accepted_val_1: (Number(activePayment.actualPaidToDate) || 41250000000) + sum,
+      currGrossPayable: sum
+    };
+
+    if (onSavePaymentData) {
+      onSavePaymentData(updatedPayment);
+    }
+
+    if (notify) {
+      setIsSavedAlert(true);
+      setTimeout(() => setIsSavedAlert(false), 3000);
+    }
+
+    return updatedPayment;
+  };
+
+  // Cập nhật khối lượng khi người dùng gõ vào ô (Tự động lưu & đồng bộ tức thì)
   const handleQtyChange = (key, val) => {
     const num = Math.max(0, Number(val) || 0);
     const updated = { ...acceptedQtys, [key]: num };
     setAcceptedQtys(updated);
+    persistQuantities(updated, false);
   };
 
   // Tính tổng giá trị nghiệm thu từ các đầu việc hiện tại
@@ -108,7 +193,7 @@ export function QuantitiesView({
     let sum = 0;
     workSections.forEach(sec => {
       sec.items.forEach(it => {
-        const key = it.jobCode || it.stt || it.id;
+        const key = getItemKey(it, sec.sectionCode);
         const q = Number(acceptedQtys[key]) || 0;
         const price = Number(it.unitPriceContract) || 0;
         sum += q * price;
@@ -128,13 +213,14 @@ export function QuantitiesView({
     const updated = {};
     workSections.forEach(sec => {
       sec.items.forEach(it => {
-        const key = it.jobCode || it.stt || it.id;
+        const key = getItemKey(it, sec.sectionCode);
         const cQty = Number(it.contractQty) || 0;
         const prevQty = Number(it.prevPaidQty) || 0;
         updated[key] = Math.max(0, cQty - prevQty);
       });
     });
     setAcceptedQtys(updated);
+    persistQuantities(updated, false);
   };
 
   // Nút tiện ích: Nghiệm thu 50% số dư còn lại
@@ -142,7 +228,7 @@ export function QuantitiesView({
     const updated = {};
     workSections.forEach(sec => {
       sec.items.forEach(it => {
-        const key = it.jobCode || it.stt || it.id;
+        const key = getItemKey(it, sec.sectionCode);
         const cQty = Number(it.contractQty) || 0;
         const prevQty = Number(it.prevPaidQty) || 0;
         const rem = Math.max(0, cQty - prevQty);
@@ -150,6 +236,7 @@ export function QuantitiesView({
       });
     });
     setAcceptedQtys(updated);
+    persistQuantities(updated, false);
   };
 
   // Nút tiện ích: Đặt tất cả về 0
@@ -157,86 +244,31 @@ export function QuantitiesView({
     const updated = {};
     workSections.forEach(sec => {
       sec.items.forEach(it => {
-        const key = it.jobCode || it.stt || it.id;
+        const key = getItemKey(it, sec.sectionCode);
         updated[key] = 0;
       });
     });
     setAcceptedQtys(updated);
+    persistQuantities(updated, false);
   };
 
-  // Lưu khối lượng nghiệm thu và cập nhật đợt thanh toán
+  // Lưu khối lượng nghiệm thu thủ công
   const handleSaveData = () => {
-    if (!activePaymentId || !activePayment) return;
-
-    // 1. Chuẩn bị mảng chi tiết khối lượng từng đầu việc
-    const itemsDetail = [];
-    workSections.forEach(sec => {
-      sec.items.forEach(it => {
-        const key = it.jobCode || it.stt || it.id;
-        const acceptedQty = Number(acceptedQtys[key]) || 0;
-        itemsDetail.push({
-          id: it.id,
-          stt: it.stt,
-          jobCode: it.jobCode,
-          name: it.name,
-          unit: it.unit,
-          contractQty: it.contractQty,
-          unitPriceContract: it.unitPriceContract,
-          prevPaidQty: it.prevPaidQty || 0,
-          thisPeriodAcceptedQty: acceptedQty,
-          note: it.note
-        });
-      });
-    });
-    storageService.savePaymentWorkItems(activePaymentId, itemsDetail);
-
-    // 2. Cập nhật số tiền vào hồ sơ thanh toán
-    const updatedPayment = {
-      ...activePayment,
-      workCompletedValue: totalAcceptedValue,
-      advanceDeduction: advanceDeduction,
-      retentionDeduction: retentionDeduction,
-      requestedAmount: requestedPaymentAmount
-    };
-
-    if (onSavePaymentData) {
-      onSavePaymentData(updatedPayment);
-    }
-
-    // Hiển thị thông báo lưu thành công
-    setIsSavedAlert(true);
-    setTimeout(() => setIsSavedAlert(false), 3000);
+    return persistQuantities(acceptedQtys, true);
   };
 
-  // Mở trực tiếp biểu mẫu Mẫu 03.a/TT với dữ liệu mới nhất
+  // Mở trực tiếp biểu mẫu Mẫu 03.a/TT với dữ liệu mới nhất (Đồng bộ 100%)
   const handleOpenForm03aModal = () => {
-    // Tự động lưu trước khi mở biểu mẫu
-    handleSaveData();
-
-    const currentPay = activePayment ? {
-      ...activePayment,
-      workCompletedValue: totalAcceptedValue,
-      advanceDeduction: advanceDeduction,
-      retentionDeduction: retentionDeduction,
-      requestedAmount: requestedPaymentAmount
-    } : null;
-
-    if (onOpenForm03a && currentPay) {
-      onOpenForm03a(currentPay);
+    const updatedPay = persistQuantities(acceptedQtys, false);
+    if (onOpenForm03a) {
+      onOpenForm03a(updatedPay || activePayment);
     }
   };
 
   // Xuất file Excel Mẫu 03.a/TT
   const handleExportExcel = () => {
-    handleSaveData();
-    const currentPay = activePayment ? {
-      ...activePayment,
-      workCompletedValue: totalAcceptedValue,
-      advanceDeduction: advanceDeduction,
-      retentionDeduction: retentionDeduction,
-      requestedAmount: requestedPaymentAmount
-    } : null;
-
+    const updatedPay = persistQuantities(acceptedQtys, false);
+    const currentPay = updatedPay || activePayment;
     const sectionsForExport = storageService.getSectionsForPayment(selectedContractId, currentPay);
     exportService.exportForm03aExcel(activeProject, activeContract, currentPay, sectionsForExport);
   };
@@ -583,7 +615,7 @@ export function QuantitiesView({
                 workSections.map(sec => {
                   const secItems = sec.items;
                   const secTotalVal = secItems.reduce((sum, it) => {
-                    const key = it.jobCode || it.stt || it.id;
+                    const key = getItemKey(it, sec.sectionCode);
                     const q = Number(acceptedQtys[key]) || 0;
                     return sum + q * (Number(it.unitPriceContract) || 0);
                   }, 0);
@@ -604,7 +636,7 @@ export function QuantitiesView({
 
                       {/* Items */}
                       {secItems.map((it, idx) => {
-                        const key = it.jobCode || it.stt || it.id;
+                        const key = getItemKey(it, sec.sectionCode);
                         const currentQty = acceptedQtys[key] !== undefined ? acceptedQtys[key] : (it.thisPeriodAcceptedQty || 0);
                         const unitPrice = Number(it.unitPriceContract) || 0;
                         const lineTotal = currentQty * unitPrice;

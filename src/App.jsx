@@ -110,6 +110,14 @@ export default function App() {
     storageService.savePayments(updated);
   };
 
+  // Tự động tạo đợt thanh toán mới theo Hàm 1 (create_next_subcontractor_payment)
+  const handleCreateNextAutoPayment = (contractId = 'cont-newtown') => {
+    const newPay = storageService.createNextSubcontractorPayment(null, contractId);
+    const updated = storageService.getPayments();
+    setPayments([...updated]);
+    return newPay;
+  };
+
   const handleUpdatePaymentStatus = (paymentId, newStatus) => {
     const updated = payments.map(p => {
       if (p.id === paymentId) {
@@ -269,6 +277,7 @@ export default function App() {
               contracts={visibleContracts}
               projects={visibleProjects}
               onOpenNewPayment={() => { setEditingPayment(null); setIsPaymentModalOpen(true); }}
+              onCreateNextAutoPayment={handleCreateNextAutoPayment}
               onSelectPayment={(p) => setSelectedPaymentForDetail(p)}
               onOpenForm03a={(p) => setSelectedPaymentForForm03a(p)}
               onOpenForm03c={(p) => setSelectedPaymentForForm03c(p)}
@@ -362,6 +371,7 @@ export default function App() {
         payment={selectedPaymentForFormHoaBinh}
         contract={activeContractForHoaBinh}
         project={activeProjectForHoaBinh}
+        onCreateNextAutoPayment={handleCreateNextAutoPayment}
         onNavigateToDetails={() => {
           const pay = selectedPaymentForFormHoaBinh;
           setSelectedPaymentForFormHoaBinh(null);

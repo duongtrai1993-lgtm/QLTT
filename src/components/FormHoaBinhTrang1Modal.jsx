@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { X, Printer, FileSpreadsheet, CheckCircle2, Clock, UserCheck, ChevronRight, ShieldCheck, Download, Edit3, ArrowRight } from 'lucide-react';
+import { X, Printer, FileSpreadsheet, CheckCircle2, Clock, UserCheck, ChevronRight, ShieldCheck, Download, Edit3, ArrowRight, Sparkles } from 'lucide-react';
 import { formatVND, formatDate, numberToVietnameseWords } from '../services/storageService';
 
-export function FormHoaBinhTrang1Modal({ isOpen, onClose, payment, contract, project, onNavigateToDetails }) {
+export function FormHoaBinhTrang1Modal({ isOpen, onClose, payment, contract, project, onNavigateToDetails, onCreateNextAutoPayment }) {
   if (!isOpen || !payment) return null;
 
   // Dữ liệu tài chính 12 chỉ tiêu (chuẩn hóa theo schema Trang 1 Hòa Bình - Nam Khôi)
@@ -91,6 +91,23 @@ export function FormHoaBinhTrang1Modal({ isOpen, onClose, payment, contract, pro
           </div>
 
           <div className="flex items-center gap-2">
+            {onCreateNextAutoPayment && (
+              <button
+                onClick={() => {
+                  const targetContId = contract?.id || payment?.contractId || 'cont-newtown';
+                  const nextPay = onCreateNextAutoPayment(targetContId);
+                  if (nextPay) {
+                    onClose();
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg text-xs font-bold transition shadow-sm"
+                title="Tự động lập đợt thanh toán kế tiếp bằng Hàm 1 (create_next_subcontractor_payment)"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-100" />
+                <span>Lập Đợt {Number(payment?.stageNumber || 13) + 1} (Hàm 1)</span>
+              </button>
+            )}
+
             {onNavigateToDetails && (
               <button
                 onClick={onNavigateToDetails}

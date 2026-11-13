@@ -10,6 +10,7 @@
   INITIAL_TEAM_TRANSACTIONS,
   INITIAL_TEAM_PAYMENTS,
   INITIAL_TEAM_PAYMENT_DETAILS,
+  INITIAL_DEDUCTION_ENTRIES,
   INITIAL_GSHEET_CONFIGS,
   INITIAL_GSHEET_SYNC_LOGS,
   NEWTOWN_BOQ_SECTIONS
@@ -28,6 +29,7 @@ const STORAGE_KEYS = {
   TEAM_TRANSACTIONS: 'qltt_team_transactions_v2',
   TEAM_PAYMENTS: 'qltt_team_payments_v2',
   TEAM_PAYMENT_DETAILS: 'qltt_team_payment_details_v2',
+  DEDUCTION_ENTRIES: 'qltt_deduction_entries_v2',
   GSHEET_CONFIGS: 'qltt_gsheet_configs_v2',
   GSHEET_SYNC_LOGS: 'qltt_gsheet_sync_logs_v2'
 };
@@ -247,6 +249,53 @@ export const storageService = {
     localStorage.setItem(STORAGE_KEYS.TEAM_PAYMENT_DETAILS, JSON.stringify(details));
   },
 
+  // 4c. Quản lý chi tiết các khoản trừ đầu vào [12a, 12b, 12c, 12d]
+  getDeductionEntries(filters = {}) {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.DEDUCTION_ENTRIES);
+      let list = data ? JSON.parse(data) : INITIAL_DEDUCTION_ENTRIES;
+
+      if (filters.target_level) {
+        list = list.filter(e => e.target_level === filters.target_level);
+      }
+      if (filters.deduct_category) {
+        list = list.filter(e => e.deduct_category === filters.deduct_category);
+      }
+      if (filters.payment_id) {
+        list = list.filter(e => e.payment_id === filters.payment_id);
+      }
+      if (filters.team_pay_id) {
+        list = list.filter(e => e.team_pay_id === filters.team_pay_id);
+      }
+      if (filters.team_id) {
+        list = list.filter(e => e.team_id === filters.team_id);
+      }
+      return list;
+    } catch {
+      return INITIAL_DEDUCTION_ENTRIES;
+    }
+  },
+  saveDeductionEntries(entries) {
+    localStorage.setItem(STORAGE_KEYS.DEDUCTION_ENTRIES, JSON.stringify(entries));
+  },
+  addDeductionEntry(entry) {
+    const list = this.getDeductionEntries();
+    const newEntry = {
+      ...entry,
+      entry_id: Date.now(),
+      created_at: new Date().toISOString()
+    };
+    const updated = [newEntry, ...list];
+    this.saveDeductionEntries(updated);
+    return newEntry;
+  },
+  updateDeductionEntryStatus(entryId, newStatus) {
+    const list = this.getDeductionEntries();
+    const updated = list.map(e => e.entry_id === entryId ? { ...e, status: newStatus } : e);
+    this.saveDeductionEntries(updated);
+    return updated;
+  },
+
   // 5. Cấu hình & Nhật ký Google Sheets
   getGSheetConfigs() {
     try {
@@ -282,10 +331,212 @@ export const storageService = {
     localStorage.setItem(STORAGE_KEYS.TEAM_TRANSACTIONS, JSON.stringify(INITIAL_TEAM_TRANSACTIONS));
     localStorage.setItem(STORAGE_KEYS.TEAM_PAYMENTS, JSON.stringify(INITIAL_TEAM_PAYMENTS));
     localStorage.setItem(STORAGE_KEYS.TEAM_PAYMENT_DETAILS, JSON.stringify(INITIAL_TEAM_PAYMENT_DETAILS));
+    localStorage.setItem(STORAGE_KEYS.DEDUCTION_ENTRIES, JSON.stringify(INITIAL_DEDUCTION_ENTRIES));
     localStorage.setItem(STORAGE_KEYS.GSHEET_CONFIGS, JSON.stringify(INITIAL_GSHEET_CONFIGS));
     localStorage.setItem(STORAGE_KEYS.GSHEET_SYNC_LOGS, JSON.stringify(INITIAL_GSHEET_SYNC_LOGS));
     localStorage.removeItem(STORAGE_KEYS.WORK_ITEMS_PREFIX + 'cont-1');
     localStorage.removeItem(STORAGE_KEYS.WORK_ITEMS_PREFIX + 'cont-newtown');
+  },
+
+  // =================================================================
+  // HÀM 1: TỰ ĐỘNG TẠO ĐỢT THANH TOÁN MỚI CHO THẦU PHỤ (HÒA BÌNH)
+  // Khớp chính xác logic SQL stored function create_next_subcontractor_payment
+  // =================================================================
+  createNextSubcontractorPayment(newPaymentId = null, contractNo = 'cont-newtown', fromDate = null, toDate = null) {
+    const contracts = this.getContracts();
+    const contract = contracts.find(c => c.id === contractNo || c.code === contractNo);
+    const payments = this.getPayments();
+
+    // 1. Tìm đợt thanh toán gần nhất trước đó của Hợp đồng này
+    const contractPayments = payments
+      .filter(p => p.contractId === (contract?.id || contractNo) || p.contractNo === (contract?.code || contractNo))
+      .sort((a, b) => (Number(b.stageNumber) || 0) - (Number(a.stageNumber) || 0));
+
+    const lastPayment = contractPayments[0] || null;
+    const newPeriod = lastPayment ? (Number(lastPayment.stageNumber) || 0) + 1 : 1;
+    const pid = newPaymentId || `pay-${contract?.id || 'newtown'}-${newPeriod}`;
+    const pidVoucher = `2026${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}${String(Date.now()).slice(-6)}`;
+
+    // 2. Tạo dòng Header Trang 1 cho đợt mới (Tự động cộng dồn lũy kế từ đợt trước)
+    const cumAcceptedVal = Number(lastPayment?.cum_accepted_val_1 ?? lastPayment?.cumAcceptedVal ?? lastPayment?.workCompletedValue ?? 0);
+    
+    // [2] = [2] cũ + Thực nhận kỳ trước (net_payable)
+    const prevPaidVal = Number(lastPayment?.prev_requested_val_2 ?? lastPayment?.prevPaidVal ?? 0) + 
+                        Number(lastPayment?.netPayable ?? lastPayment?.net_payable ?? lastPayment?.requestedAmount ?? 0);
+    
+    // [3] = [3] cũ + [12a] cũ
+    const prevDeductMat = Number(lastPayment?.prev_deduct_material_3 ?? lastPayment?.prevDeductMat ?? 0) + 
+                          Number(lastPayment?.curr_deduct_material_12a ?? lastPayment?.currDeductMat ?? 0);
+    
+    // [4] = [4] cũ + [12b] cũ
+    const prevDeductPpe = Number(lastPayment?.prev_deduct_ppe_4 ?? lastPayment?.prevDeductPpe ?? 0) + 
+                          Number(lastPayment?.curr_deduct_ppe_12b ?? lastPayment?.currDeductPpe ?? 0);
+    
+    // [5] = [5] cũ + [12c] cũ
+    const prevDeductOther = Number(lastPayment?.prev_deduct_other_5 ?? lastPayment?.prevDeductOther ?? 0) + 
+                            Number(lastPayment?.curr_deduct_other_12c ?? lastPayment?.currDeductOther ?? 0);
+    
+    // [6] = [6] cũ + [12d] cũ
+    const prevHoldAmount = Number(lastPayment?.prev_hold_6 ?? lastPayment?.prevHoldAmount ?? 0) + 
+                           Number(lastPayment?.curr_hold_12d ?? lastPayment?.currHoldAmount ?? 0);
+    
+    // [7] Tạm giữ nguyên lũy kế bảo lưu cũ khi KL kỳ này = 0
+    const cumRetention = Number(lastPayment?.cum_retention_7 ?? lastPayment?.cumRetention ?? lastPayment?.retentionDeduction ?? 0);
+    const cumRecAdvance = Number(lastPayment?.cum_adv_recovery_8 ?? lastPayment?.cumRecAdvance ?? 0);
+    const cumRecMat = Number(lastPayment?.cum_mat_adv_recovery_9 ?? lastPayment?.cumRecMat ?? 0);
+
+    const totalDeductedPrev = prevPaidVal + prevDeductMat + prevDeductPpe + prevDeductOther + prevHoldAmount + cumRetention + cumRecAdvance + cumRecMat;
+    const currGrossPayable = Math.max(0, cumAcceptedVal - totalDeductedPrev);
+
+    const newPayment = {
+      id: pid,
+      contractId: contract?.id || contractNo,
+      contractNo: contract?.code || '0103/NEWTOWN/NAMKHOI/2026',
+      stageNumber: newPeriod,
+      paymentId: pidVoucher,
+      title: `Đề nghị thanh toán Đợt ${newPeriod}: Thi công kết cấu giai đoạn tiếp theo`,
+      paymentType: 'progress',
+      dateRequested: new Date().toISOString().slice(0, 10),
+      periodFrom: fromDate || new Date().toISOString().slice(0, 10),
+      periodTo: toDate || new Date().toISOString().slice(0, 10),
+      dueDate: new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10),
+      status: 'draft',
+      
+      // 12 chỉ tiêu tài chính (Khớp hoàn toàn Header Trang 1)
+      cumAcceptedVal,
+      prevPaidVal,
+      prevDeductMat,
+      prevDeductPpe,
+      prevDeductOther,
+      prevHoldAmount,
+      cumRetention,
+      cumRecAdvance,
+      cumRecMat,
+      totalDeductedPrev,
+      currGrossPayable,
+      
+      // Khấu trừ kỳ này [12a..12d] ban đầu = 0
+      currDeductMat: 0,
+      currDeductPpe: 0,
+      currDeductOther: 0,
+      currHoldAmount: 0,
+      currTotalDeduct: 0,
+      
+      // Tương thích key Form Trang 1 & Mẫu 03.a/TT
+      cum_accepted_val_1: cumAcceptedVal,
+      prev_requested_val_2: prevPaidVal,
+      prev_deduct_material_3: prevDeductMat,
+      prev_deduct_ppe_4: prevDeductPpe,
+      prev_deduct_other_5: prevDeductOther,
+      prev_hold_6: prevHoldAmount,
+      cum_retention_7: cumRetention,
+      cum_adv_recovery_8: cumRecAdvance,
+      cum_mat_adv_recovery_9: cumRecMat,
+      curr_deduct_material_12a: 0,
+      curr_deduct_ppe_12b: 0,
+      curr_deduct_other_12c: 0,
+      curr_hold_12d: 0,
+
+      workCompletedValue: 0,
+      advanceDeduction: 0,
+      retentionDeduction: 0,
+      requestedAmount: currGrossPayable,
+      approvedAmount: currGrossPayable,
+      netPayable: currGrossPayable,
+      amountInWords: numberToVietnameseWords(currGrossPayable),
+      notes: `Đợt ${newPeriod} được tự động sinh từ Hàm 1 (create_next_subcontractor_payment) - Kế thừa lũy kế từ Đợt ${lastPayment?.stageNumber || 1}.`
+    };
+
+    // 3. Tự động sinh chi tiết công việc (Trang 2-5): Đẩy "LK đến nay" cũ thành "LK kỳ trước" mới
+    const baseSections = this.getWorkItems(contract?.id || contractNo);
+    let newItems = [];
+    if (lastPayment) {
+      const lastPaymentItems = this.getPaymentWorkItems(lastPayment.id);
+      if (lastPaymentItems && Array.isArray(lastPaymentItems) && lastPaymentItems.length > 0) {
+        newItems = lastPaymentItems.map(it => {
+          const cumQty = (Number(it.prevPaidQty) || 0) + (Number(it.thisPeriodAcceptedQty) || 0);
+          const cumVal = (Number(it.prevPaidVal) || 0) + (Number(it.thisPeriodAcceptedVal) || 0);
+          const remQty = Math.max(0, (Number(it.contractQty) || 0) - cumQty);
+          const remVal = Math.max(0, (Number(it.contractVal) || (Number(it.contractQty) * Number(it.unitPriceContract))) - cumVal);
+          return {
+            ...it,
+            prevPaidQty: cumQty,
+            thisPeriodAcceptedQty: 0,
+            totalCumulativeQty: cumQty,
+            thisPeriodRequestedQty: 0,
+            prevPaidVal: cumVal,
+            thisPeriodAcceptedVal: 0,
+            thisPeriodRequestedVal: 0,
+            totalPaidToDateVal: cumVal,
+            remQty,
+            remVal
+          };
+        });
+      } else {
+        baseSections.forEach(sec => {
+          sec.items.forEach(it => {
+            const cumQty = (Number(it.prevPaidQty) || 0) + (Number(it.thisPeriodAcceptedQty) || 0);
+            const cumVal = (Number(it.prevPaidVal) || 0) + (Number(it.thisPeriodAcceptedVal) || 0);
+            const remQty = Math.max(0, (Number(it.contractQty) || 0) - cumQty);
+            const remVal = Math.max(0, (Number(it.contractVal) || (Number(it.contractQty) * Number(it.unitPriceContract))) - cumVal);
+            newItems.push({
+              id: it.id,
+              stt: it.stt,
+              jobCode: it.jobCode,
+              name: it.name,
+              unit: it.unit,
+              contractQty: it.contractQty,
+              unitPriceContract: it.unitPriceContract,
+              contractVal: it.contractVal || (Number(it.contractQty) * Number(it.unitPriceContract)),
+              prevPaidQty: cumQty,
+              thisPeriodAcceptedQty: 0,
+              totalCumulativeQty: cumQty,
+              thisPeriodRequestedQty: 0,
+              prevPaidVal: cumVal,
+              thisPeriodAcceptedVal: 0,
+              thisPeriodRequestedVal: 0,
+              totalPaidToDateVal: cumVal,
+              remQty,
+              remVal,
+              note: it.note
+            });
+          });
+        });
+      }
+    } else {
+      // Nếu là Đợt 1: Lấy thẳng từ bảng BOQ gốc với LK kỳ trước = 0
+      baseSections.forEach(sec => {
+        sec.items.forEach(it => {
+          newItems.push({
+            id: it.id,
+            stt: it.stt,
+            jobCode: it.jobCode,
+            name: it.name,
+            unit: it.unit,
+            contractQty: it.contractQty,
+            unitPriceContract: it.unitPriceContract,
+            contractVal: it.contractVal || (Number(it.contractQty) * Number(it.unitPriceContract)),
+            prevPaidQty: 0,
+            thisPeriodAcceptedQty: 0,
+            totalCumulativeQty: 0,
+            thisPeriodRequestedQty: 0,
+            prevPaidVal: 0,
+            thisPeriodAcceptedVal: 0,
+            thisPeriodRequestedVal: 0,
+            totalPaidToDateVal: 0,
+            remQty: it.contractQty,
+            remVal: it.contractVal || (Number(it.contractQty) * Number(it.unitPriceContract)),
+            note: it.note
+          });
+        });
+      });
+    }
+
+    this.savePaymentWorkItems(pid, newItems);
+
+    const updatedPayments = [newPayment, ...payments];
+    this.savePayments(updatedPayments);
+    return newPayment;
   }
 };
 

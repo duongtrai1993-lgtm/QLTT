@@ -198,3 +198,89 @@ CREATE TABLE gsheet_sync_logs (
     error_message TEXT,
     synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- =================================================================
+-- HÀM 1: TỰ ĐỘNG TẠO ĐỢT THANH TOÁN MỚI CHO THẦU PHỤ (HÒA BÌNH)
+-- =================================================================
+CREATE OR REPLACE FUNCTION create_next_subcontractor_payment(
+    p_new_payment_id VARCHAR(50),
+    p_contract_no VARCHAR(100),
+    p_from_date DATE,
+    p_to_date DATE
+) RETURNS void AS $func$
+DECLARE
+    v_last_payment payment_requests%ROWTYPE;
+    v_new_period INT;
+BEGIN
+    -- 1. Tìm đợt thanh toán gần nhất trước đó của Hợp đồng này
+    SELECT * INTO v_last_payment
+    FROM payment_requests
+    WHERE contract_no = p_contract_no
+    ORDER BY period_no DESC
+    LIMIT 1;
+
+    -- Xác định số thứ tự đợt mới
+    IF FOUND THEN
+        v_new_period := v_last_payment.period_no + 1;
+    ELSE
+        v_new_period := 1; -- Nếu là đợt đầu tiên
+    END IF;
+
+    -- 2. Tạo dòng Header Trang 1 cho đợt mới (Tự động cộng dồn lũy kế từ đợt trước)
+    INSERT INTO payment_requests (
+        payment_id, contract_no, period_no, from_date, to_date, status,
+        cum_accepted_val,
+        prev_paid_val,       -- [2] = [2] cũ + Thực nhận kỳ trước
+        prev_deduct_mat,     -- [3] = [3] cũ + [12a] cũ
+        prev_deduct_ppe,     -- [4] = [4] cũ + [12b] cũ
+        prev_deduct_other,   -- [5] = [5] cũ + [12c] cũ
+        prev_hold_amount,    -- [6] = [6] cũ + [12d] cũ
+        cum_retention,       -- [7] Tạm giữ nguyên lũy kế bảo lưu cũ khiKL kỳ này = 0
+        cum_rec_advance,     -- [8]
+        cum_rec_mat          -- [9]
+    ) VALUES (
+        p_new_payment_id, p_contract_no, v_new_period, p_from_date, p_to_date, 'DRAFT',
+        COALESCE(v_last_payment.cum_accepted_val, 0),
+        COALESCE(v_last_payment.prev_paid_val, 0) + COALESCE(v_last_payment.net_payable, 0),
+        COALESCE(v_last_payment.prev_deduct_mat, 0) + COALESCE(v_last_payment.curr_deduct_mat, 0),
+        COALESCE(v_last_payment.prev_deduct_ppe, 0) + COALESCE(v_last_payment.curr_deduct_ppe, 0),
+        COALESCE(v_last_payment.prev_deduct_other, 0) + COALESCE(v_last_payment.curr_deduct_other, 0),
+        COALESCE(v_last_payment.prev_hold_amount, 0) + COALESCE(v_last_payment.curr_hold_amount, 0),
+        COALESCE(v_last_payment.cum_retention, 0),
+        COALESCE(v_last_payment.cum_rec_advance, 0),
+        COALESCE(v_last_payment.cum_rec_mat, 0)
+    );
+
+    -- 3. Tự động sinh 115 dòng chi tiết công việc (Trang 2-5) và đẩy "LK đến nay" cũ thành "LK kỳ trước" mới
+    IF FOUND THEN
+        INSERT INTO payment_details (
+            payment_id, item_id,
+            prev_qty, curr_qty, cum_qty,
+            prev_val, curr_val, cum_val,
+            rem_qty, rem_val
+        )
+        SELECT 
+            p_new_payment_id, d.item_id,
+            d.cum_qty, 0, d.cum_qty,     -- KL LK kỳ trước mới = KL LK đến nay cũ
+            d.cum_val, 0, d.cum_val,     -- GT LK kỳ trước mới = GT LK đến nay cũ
+            d.rem_qty, d.rem_val
+        FROM payment_details d
+        WHERE d.payment_id = v_last_payment.payment_id;
+    ELSE
+        -- Nếu là Đợt 1: Lấy thẳng từ bảng BOQ gốc với LK kỳ trước = 0
+        INSERT INTO payment_details (
+            payment_id, item_id,
+            prev_qty, curr_qty, cum_qty,
+            prev_val, curr_val, cum_val,
+            rem_qty, rem_val
+        )
+        SELECT 
+            p_new_payment_id, b.item_id,
+            0, 0, 0,
+            0, 0, 0,
+            b.contract_qty, b.contract_amount
+        FROM contract_boq b
+        WHERE b.contract_no = p_contract_no;
+    END IF;
+END;
+$func$ LANGUAGE plpgsql;

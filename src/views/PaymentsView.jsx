@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { Plus, Filter, FileText, CheckCircle, Clock, AlertCircle, Eye, Printer, Edit2, Trash2, TableProperties } from 'lucide-react';
+import { Plus, Filter, FileText, CheckCircle, Clock, AlertCircle, Eye, Printer, Edit2, Trash2, TableProperties, Sparkles } from 'lucide-react';
 import { StatusBadge } from '../components/StatusBadge';
 import { formatVND, formatDate } from '../services/storageService';
 
@@ -8,6 +8,7 @@ export function PaymentsView({
   contracts,
   projects,
   onOpenNewPayment,
+  onCreateNextAutoPayment,
   onSelectPayment,
   onOpenForm03a,
   onOpenForm03c,
@@ -20,6 +21,7 @@ export function PaymentsView({
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [contractFilter, setContractFilter] = useState('all');
+  const [autoCreatedNotice, setAutoCreatedNotice] = useState(null);
 
   const filteredPayments = payments.filter(p => {
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;
@@ -45,14 +47,45 @@ export function PaymentsView({
           </p>
         </div>
 
-        <button
-          onClick={onOpenNewPayment}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm shadow-blue-500/20 transition self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Lập Đợt Thanh Toán Mới
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          {onCreateNextAutoPayment && (
+            <button
+              onClick={() => {
+                const targetContract = contractFilter !== 'all' ? contractFilter : 'cont-newtown';
+                const newPay = onCreateNextAutoPayment(targetContract);
+                if (newPay) {
+                  setAutoCreatedNotice(`Đã tự động khởi tạo thành công Đợt ${newPay.stageNumber} theo Hàm 1! Lũy kế đã nhận và các khoản trừ [2]..[6] đã kết chuyển tự động; 115 dòng BOQ chi tiết đã được đồng bộ.`);
+                  setTimeout(() => setAutoCreatedNotice(null), 8000);
+                }
+              }}
+              className="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm shadow-indigo-500/20 transition"
+              title="Tự động tạo Đợt kế tiếp theo Hàm 1: Tự động cộng dồn lũy kế [2]..[6] và sinh 115 dòng chi tiết BOQ"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              Tạo Đợt Kế Tiếp (Hàm 1)
+            </button>
+          )}
+
+          <button
+            onClick={onOpenNewPayment}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm shadow-blue-500/20 transition"
+          >
+            <Plus className="w-4 h-4" />
+            Lập Đợt Thanh Toán Mới
+          </button>
+        </div>
       </div>
+
+      {/* Auto-created Notification Banner */}
+      {autoCreatedNotice && (
+        <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm animate-fade-in text-xs font-semibold">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{autoCreatedNotice}</span>
+          </div>
+          <button onClick={() => setAutoCreatedNotice(null)} className="text-emerald-700 hover:text-emerald-900 font-bold ml-2">✕</button>
+        </div>
+      )}
 
       {/* Filter toolbar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex flex-wrap items-center gap-3 text-xs">

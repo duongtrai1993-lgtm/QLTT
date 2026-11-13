@@ -1,11 +1,13 @@
 ﻿import React from 'react';
-import { LayoutDashboard, Building2, FileSignature, Receipt, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Building2, FileSignature, Receipt, ShieldAlert, Users, FileSpreadsheet } from 'lucide-react';
 import { formatBillion } from '../services/storageService';
 
 export function Sidebar({ currentTab, onTabChange, stats }) {
   const navItems = [
     { id: 'dashboard', label: 'Tổng Quan & Báo Cáo', icon: LayoutDashboard },
     { id: 'payments', label: 'Hồ Sơ & Đợt Thanh Toán', icon: Receipt, badge: stats?.pendingCount },
+    { id: 'teams', label: 'Quản Lý Tổ Đội & Chi Phí', icon: Users, badge: 4, badgeColor: 'bg-indigo-600' },
+    { id: 'gsheets', label: 'Đồng Bộ Google Sheets', icon: FileSpreadsheet },
     { id: 'contracts', label: 'Hợp Đồng & Gói Thầu', icon: FileSignature, badge: stats?.contractCount },
     { id: 'projects', label: 'Dự Án Đầu Tư', icon: Building2, badge: stats?.projectCount },
     { id: 'guarantees', label: 'Cảnh Báo Bảo Lãnh', icon: ShieldAlert, badge: stats?.alertCount, badgeColor: 'bg-rose-500' },

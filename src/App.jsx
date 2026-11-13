@@ -17,6 +17,9 @@ import { ProjectModal } from './components/ProjectModal';
 import { ContractModal } from './components/ContractModal';
 import { WorkItemsModal } from './components/WorkItemsModal';
 import { QuantitiesView } from './views/QuantitiesView';
+import { TeamsView } from './views/TeamsView';
+import { GoogleSheetsView } from './views/GoogleSheetsView';
+import { FormHoaBinhTrang1Modal } from './components/FormHoaBinhTrang1Modal';
 
 export default function App() {
   const [projects, setProjects] = useState([]);
@@ -37,6 +40,7 @@ export default function App() {
   const [selectedPaymentForForm03a, setSelectedPaymentForForm03a] = useState(null);
   const [selectedPaymentForForm03c, setSelectedPaymentForForm03c] = useState(null);
   const [selectedPaymentForForm04a, setSelectedPaymentForForm04a] = useState(null);
+  const [selectedPaymentForFormHoaBinh, setSelectedPaymentForFormHoaBinh] = useState(null);
   const [activePaymentIdForQuantities, setActivePaymentIdForQuantities] = useState(null);
 
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -202,6 +206,9 @@ export default function App() {
   const activeContractFor04a = contracts.find(c => c.id === selectedPaymentForForm04a?.contractId);
   const activeProjectFor04a = projects.find(p => p.id === activeContractFor04a?.projectId);
 
+  const activeContractForHoaBinh = contracts.find(c => c.id === selectedPaymentForFormHoaBinh?.contractId);
+  const activeProjectForHoaBinh = projects.find(p => p.id === activeContractForHoaBinh?.projectId);
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       
@@ -265,6 +272,7 @@ export default function App() {
               onOpenForm03a={(p) => setSelectedPaymentForForm03a(p)}
               onOpenForm03c={(p) => setSelectedPaymentForForm03c(p)}
               onOpenForm04a={(p) => setSelectedPaymentForForm04a(p)}
+              onOpenFormHoaBinh={(p) => setSelectedPaymentForFormHoaBinh(p)}
               onNavigateToQuantities={(payId) => {
                 setActivePaymentIdForQuantities(payId);
                 setCurrentTab('quantities');
@@ -272,6 +280,14 @@ export default function App() {
               onEditPayment={(p) => { setEditingPayment(p); setIsPaymentModalOpen(true); }}
               onDeletePayment={handleDeletePayment}
             />
+          )}
+
+          {currentTab === 'teams' && (
+            <TeamsView />
+          )}
+
+          {currentTab === 'gsheets' && (
+            <GoogleSheetsView />
           )}
 
           {currentTab === 'contracts' && (
@@ -335,7 +351,22 @@ export default function App() {
         onOpenForm03a={() => setSelectedPaymentForForm03a(selectedPaymentForDetail)}
         onOpenForm03c={() => setSelectedPaymentForForm03c(selectedPaymentForDetail)}
         onOpenForm04a={() => setSelectedPaymentForForm04a(selectedPaymentForDetail)}
+        onOpenFormHoaBinh={() => setSelectedPaymentForFormHoaBinh(selectedPaymentForDetail)}
         onDeletePayment={handleDeletePayment}
+      />
+
+      <FormHoaBinhTrang1Modal
+        isOpen={Boolean(selectedPaymentForFormHoaBinh)}
+        onClose={() => setSelectedPaymentForFormHoaBinh(null)}
+        payment={selectedPaymentForFormHoaBinh}
+        contract={activeContractForHoaBinh}
+        project={activeProjectForHoaBinh}
+        onNavigateToDetails={() => {
+          const pay = selectedPaymentForFormHoaBinh;
+          setSelectedPaymentForFormHoaBinh(null);
+          setActivePaymentIdForQuantities(pay.id);
+          setCurrentTab('quantities');
+        }}
       />
 
       <Form03aModal

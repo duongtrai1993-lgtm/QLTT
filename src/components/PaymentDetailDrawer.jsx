@@ -16,6 +16,7 @@ export function PaymentDetailDrawer({
   onOpenForm03a,
   onOpenForm03c,
   onOpenForm04a,
+  onOpenFormHoaBinh,
   onDeletePayment
 }) {
   if (!isOpen || !payment) return null;
@@ -122,6 +123,15 @@ export function PaymentDetailDrawer({
                     <FileText className="w-4 h-4" />
                     Xem Bảng Xác Định Khối Lượng (Mẫu 03.a/TT - NĐ 254/2025)
                   </button>
+                  {onOpenFormHoaBinh && (
+                    <button
+                      onClick={onOpenFormHoaBinh}
+                      className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-600 hover:to-indigo-700 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-2 shadow-sm transition border border-blue-400/30"
+                    >
+                      <FileText className="w-4 h-4 text-amber-300" />
+                      Xem Đề Nghị Thanh Toán Trang 1 (Mẫu Hòa Bình - 12 Chỉ Tiêu)
+                    </button>
+                  )}
                   <button
                     onClick={onOpenForm04a}
                     className="w-full py-2 px-4 bg-slate-700 hover:bg-slate-600 text-slate-100 font-medium rounded-lg text-xs flex items-center justify-center gap-2 transition"

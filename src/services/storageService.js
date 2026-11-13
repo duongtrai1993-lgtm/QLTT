@@ -1,4 +1,18 @@
-﻿import { INITIAL_PROJECTS, INITIAL_CONTRACTS, INITIAL_PAYMENTS, INITIAL_DOCUMENTS, INITIAL_CHECKLIST_TEMPLATE, SAMPLE_FORM_03A_SECTIONS } from '../data/sampleData';
+﻿import { 
+  INITIAL_PROJECTS, 
+  INITIAL_CONTRACTS, 
+  INITIAL_PAYMENTS, 
+  INITIAL_DOCUMENTS, 
+  INITIAL_CHECKLIST_TEMPLATE, 
+  SAMPLE_FORM_03A_SECTIONS,
+  INITIAL_TEAMS,
+  INITIAL_TEAM_BOQ,
+  INITIAL_TEAM_TRANSACTIONS,
+  INITIAL_TEAM_PAYMENTS,
+  INITIAL_GSHEET_CONFIGS,
+  INITIAL_GSHEET_SYNC_LOGS,
+  NEWTOWN_BOQ_SECTIONS
+} from '../data/sampleData';
 
 const STORAGE_KEYS = {
   PROJECTS: 'qltt_projects_v1',
@@ -7,7 +21,13 @@ const STORAGE_KEYS = {
   DOCUMENTS: 'qltt_documents_v1',
   CHECKLIST_TEMPLATE: 'qltt_checklist_template_v1',
   WORK_ITEMS_PREFIX: 'qltt_work_items_',
-  PAYMENT_ITEMS_PREFIX: 'qltt_pay_items_'
+  PAYMENT_ITEMS_PREFIX: 'qltt_pay_items_',
+  TEAMS: 'qltt_teams_v1',
+  TEAM_BOQ: 'qltt_team_boq_v1',
+  TEAM_TRANSACTIONS: 'qltt_team_transactions_v1',
+  TEAM_PAYMENTS: 'qltt_team_payments_v1',
+  GSHEET_CONFIGS: 'qltt_gsheet_configs_v1',
+  GSHEET_SYNC_LOGS: 'qltt_gsheet_sync_logs_v1'
 };
 
 export const storageService = {
@@ -69,6 +89,12 @@ export const storageService = {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.WORK_ITEMS_PREFIX + contractId);
       if (data) return JSON.parse(data);
+
+      // Nếu là gói thầu cont-newtown: khởi tạo từ NEWTOWN_BOQ_SECTIONS
+      if (contractId === 'cont-newtown') {
+        localStorage.setItem(STORAGE_KEYS.WORK_ITEMS_PREFIX + contractId, JSON.stringify(NEWTOWN_BOQ_SECTIONS));
+        return NEWTOWN_BOQ_SECTIONS;
+      }
 
       // Nếu là gói thầu cont-1 mẫu: khởi tạo từ SAMPLE_FORM_03A_SECTIONS
       if (contractId === 'cont-1') {
@@ -153,12 +179,96 @@ export const storageService = {
     return baseSections;
   },
 
+  // 1. Quản lý Tổ đội thi công
+  getTeams() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.TEAMS);
+      return data ? JSON.parse(data) : INITIAL_TEAMS;
+    } catch {
+      return INITIAL_TEAMS;
+    }
+  },
+  saveTeams(teams) {
+    localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(teams));
+  },
+
+  // 2. Bảng BOQ đơn giá giao khoán tổ đội
+  getTeamBOQ() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.TEAM_BOQ);
+      return data ? JSON.parse(data) : INITIAL_TEAM_BOQ;
+    } catch {
+      return INITIAL_TEAM_BOQ;
+    }
+  },
+  saveTeamBOQ(items) {
+    localStorage.setItem(STORAGE_KEYS.TEAM_BOQ, JSON.stringify(items));
+  },
+
+  // 3. Sổ nhật ký tạm ứng & phạt hiện trường
+  getTeamTransactions() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.TEAM_TRANSACTIONS);
+      return data ? JSON.parse(data) : INITIAL_TEAM_TRANSACTIONS;
+    } catch {
+      return INITIAL_TEAM_TRANSACTIONS;
+    }
+  },
+  saveTeamTransactions(transactions) {
+    localStorage.setItem(STORAGE_KEYS.TEAM_TRANSACTIONS, JSON.stringify(transactions));
+  },
+
+  // 4. Thanh toán lương tổ đội theo kỳ
+  getTeamPayments() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.TEAM_PAYMENTS);
+      return data ? JSON.parse(data) : INITIAL_TEAM_PAYMENTS;
+    } catch {
+      return INITIAL_TEAM_PAYMENTS;
+    }
+  },
+  saveTeamPayments(payments) {
+    localStorage.setItem(STORAGE_KEYS.TEAM_PAYMENTS, JSON.stringify(payments));
+  },
+
+  // 5. Cấu hình & Nhật ký Google Sheets
+  getGSheetConfigs() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.GSHEET_CONFIGS);
+      return data ? JSON.parse(data) : INITIAL_GSHEET_CONFIGS;
+    } catch {
+      return INITIAL_GSHEET_CONFIGS;
+    }
+  },
+  saveGSheetConfigs(configs) {
+    localStorage.setItem(STORAGE_KEYS.GSHEET_CONFIGS, JSON.stringify(configs));
+  },
+
+  getGSheetSyncLogs() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.GSHEET_SYNC_LOGS);
+      return data ? JSON.parse(data) : INITIAL_GSHEET_SYNC_LOGS;
+    } catch {
+      return INITIAL_GSHEET_SYNC_LOGS;
+    }
+  },
+  saveGSheetSyncLogs(logs) {
+    localStorage.setItem(STORAGE_KEYS.GSHEET_SYNC_LOGS, JSON.stringify(logs));
+  },
+
   resetToDefault() {
     localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(INITIAL_PROJECTS));
     localStorage.setItem(STORAGE_KEYS.CONTRACTS, JSON.stringify(INITIAL_CONTRACTS));
     localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify(INITIAL_PAYMENTS));
     localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(INITIAL_DOCUMENTS));
+    localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(INITIAL_TEAMS));
+    localStorage.setItem(STORAGE_KEYS.TEAM_BOQ, JSON.stringify(INITIAL_TEAM_BOQ));
+    localStorage.setItem(STORAGE_KEYS.TEAM_TRANSACTIONS, JSON.stringify(INITIAL_TEAM_TRANSACTIONS));
+    localStorage.setItem(STORAGE_KEYS.TEAM_PAYMENTS, JSON.stringify(INITIAL_TEAM_PAYMENTS));
+    localStorage.setItem(STORAGE_KEYS.GSHEET_CONFIGS, JSON.stringify(INITIAL_GSHEET_CONFIGS));
+    localStorage.setItem(STORAGE_KEYS.GSHEET_SYNC_LOGS, JSON.stringify(INITIAL_GSHEET_SYNC_LOGS));
     localStorage.removeItem(STORAGE_KEYS.WORK_ITEMS_PREFIX + 'cont-1');
+    localStorage.removeItem(STORAGE_KEYS.WORK_ITEMS_PREFIX + 'cont-newtown');
   }
 };
 

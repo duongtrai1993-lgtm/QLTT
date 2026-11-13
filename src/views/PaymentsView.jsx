@@ -12,6 +12,7 @@ export function PaymentsView({
   onOpenForm03a,
   onOpenForm03c,
   onOpenForm04a,
+  onOpenFormHoaBinh,
   onNavigateToQuantities,
   onEditPayment,
   onDeletePayment
@@ -212,6 +213,16 @@ export function PaymentsView({
                               className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition font-bold"
                             >
                               <TableProperties className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {onOpenFormHoaBinh && (p.contractId === 'cont-newtown' || p.title?.includes('13')) && (
+                            <button
+                              onClick={() => onOpenFormHoaBinh(p)}
+                              title="Xem Bảng Đề Nghị Thanh Toán Trang 1 (Mẫu Hòa Bình - 12 Chỉ Tiêu)"
+                              className="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition font-bold"
+                            >
+                              <FileText className="w-4 h-4 text-indigo-600" />
                             </button>
                           )}
                           

@@ -1,5 +1,20 @@
 ﻿export const INITIAL_PROJECTS = [
   {
+    id: "proj-newtown",
+    code: "2469E11000",
+    name: "Khu căn hộ cao tầng Newtown",
+    owner: "Tập đoàn Xây dựng Hòa Bình",
+    mainContractor: "Tập đoàn Xây dựng Hòa Bình",
+    location: "Trường Sa, Ngũ Hành Sơn, TP. Đà Nẵng",
+    category: "Công trình Dân dụng cấp I",
+    budget: 1500000000000, // 1.500 tỷ
+    capitalSource: "Vốn Chủ đầu tư & Thương mại",
+    startDate: "2024-01-01",
+    endDate: "2026-12-31",
+    status: "in_progress",
+    description: "Tổ hợp 2 tòa tháp cao tầng M1 và M2 cao 35 tầng với hơn 1.200 căn hộ cao cấp và khối đế thương mại."
+  },
+  {
     id: "proj-1",
     code: "DA-2024-01",
     name: "Cải tạo & Nâng cấp Tuyến Đường Vành Đai Bắc (Km12 - Km35)",
@@ -44,6 +59,30 @@
 ];
 
 export const INITIAL_CONTRACTS = [
+  {
+    id: "cont-newtown",
+    projectId: "proj-newtown",
+    code: "0103/NEWTOWN/NAMKHOI/2026",
+    subcontractorCode: "TC000056",
+    contractor: "Công ty TNHH MTV XD và TM Nam Khôi",
+    subcontractorName: "Công ty TNHH MTV XD và TM Nam Khôi",
+    packageName: "Thi công kết cấu BTCT Tòa M1, M2 - Dự án Newtown",
+    mainScope: "Thi công kết cấu BTCT Tòa M1, M2",
+    contractorTaxCode: "0401892837",
+    contractorAccount: "0041000345678 - Vietcombank Chi nhánh Đà Nẵng",
+    bankName: "Vietcombank Chi nhánh Đà Nẵng",
+    contractType: "Đơn giá cố định",
+    signDate: "2024-01-10",
+    durationDays: 730,
+    originalValue: 60168402240, // 60.168.402.240 đ
+    adjustedValue: 60168402240,
+    advanceRate: 0,
+    retentionRate: 5, // 5% bảo lưu
+    advanceRecoveryRate: 0,
+    vatRate: 8, // 8% VAT
+    guaranteeExpiry: "2026-12-31",
+    status: "active"
+  },
   {
     id: "cont-1",
     projectId: "proj-1",
@@ -135,6 +174,48 @@ export const INITIAL_CONTRACTS = [
 ];
 
 export const INITIAL_PAYMENTS = [
+  {
+    id: "pay-newtown-13",
+    contractId: "cont-newtown",
+    stageNumber: 13,
+    paymentId: "20261019054706",
+    title: "Đề nghị thanh toán Đợt 13: Thi công kết cấu sàn tầng 18-22 Tòa M1 & M2",
+    paymentType: "progress",
+    dateRequested: "2026-10-19",
+    periodFrom: "2026-09-01",
+    periodTo: "2026-09-30",
+    dueDate: "2026-10-30",
+    status: "pending_approval",
+    
+    // 12 chỉ tiêu tài chính chi tiết theo Form Hòa Bình:
+    actualPaidToDate: 41250000000,
+    cumAcceptedVal: 48950000000,    // [1] Lũy kế GT nghiệm thu (đã VAT 8%)
+    prevPaidVal: 38500000000,       // [2] LK đề nghị TT kỳ trước
+    prevDeductMat: 1250000000,      // [3] LK trừ vật tư kỳ trước
+    prevDeductPpe: 185000000,       // [4] LK trừ BHLĐ kỳ trước
+    prevDeductOther: 120000000,     // [5] LK trừ khác kỳ trước
+    prevHoldAmount: 500000000,      // [6] LK tạm giữ kỳ trước
+    cumRetention: 2447500000,       // [7] LK 5% bảo lưu đến nay
+    cumRecAdvance: 0,               // [8] LK thu hồi tạm ứng HĐ
+    cumRecMat: 0,                   // [9] LK thu hồi tạm ứng vật tư
+    totalDeductedPrev: 43002500000, // [10] = SUM([2]..[9])
+    currGrossPayable: 5947500000,   // [11] = [1] - [10]
+    
+    // Khấu trừ kỳ này [12]:
+    currDeductMat: 320000000,       // [12a] Trừ vật tư kỳ này
+    currDeductPpe: 45000000,        // [12b] Trừ BHLĐ kỳ này
+    currDeductOther: 15000000,      // [12c] Trừ khác kỳ này
+    currHoldAmount: 100000000,      // [12d] Tạm giữ kỳ này
+    currTotalDeduct: 480000000,     // [12] = SUM(12a..12d)
+    
+    workCompletedValue: 5506944444, // Giá trị chưa VAT
+    advanceDeduction: 0,
+    retentionDeduction: 275347222, // 5% bảo lưu kỳ này
+    requestedAmount: 5467500000,    // Thực nhận = [11] - [12]
+    netPayable: 5467500000,
+    amountInWords: "Năm tỷ bốn trăm sáu mươi bảy triệu năm trăm nghìn đồng chẵn",
+    notes: "Nghiệm thu đổ bê tông sàn tầng 20, 21, 22. Đã đối chiếu khối lượng thép với Ban Chỉ Huy Hòa Bình."
+  },
   {
     id: "pay-1",
     contractId: "cont-1",
@@ -643,3 +724,477 @@ export const SAMPLE_FORM_03A_SECTIONS = [
     ]
   }
 ];
+
+// ==========================================
+// PHẦN 3: DỮ LIỆU TỔ ĐỘI THI CÔNG (ĐẦU RA - CHI TIỀN)
+// Dự án: Khu căn hộ cao tầng Newtown (Hòa Bình - Nam Khôi)
+// ==========================================
+
+export const INITIAL_TEAMS = [
+  {
+    teamId: "team-1",
+    teamCode: "TD-THEP-01",
+    teamName: "Tổ Thép - Đội Tuấn",
+    leaderName: "Nguyễn Văn Tuấn",
+    phone: "0905.123.456",
+    idCard: "201847589",
+    bankAccount: "1028374659 - VietinBank Đà Nẵng",
+    bankName: "VietinBank",
+    specialty: "Cốt thép kết cấu dầm sàn, cột vách",
+    membersCount: 38,
+    status: "ACTIVE"
+  },
+  {
+    teamId: "team-2",
+    teamCode: "TD-COFFA-02",
+    teamName: "Tổ Coffa - Đội Hải",
+    leaderName: "Trần Đình Hải",
+    phone: "0914.789.012",
+    idCard: "201938472",
+    bankAccount: "0041000889977 - Vietcombank Đà Nẵng",
+    bankName: "Vietcombank",
+    specialty: "Ván khuôn nhôm & Hệ giàn giáo leo",
+    membersCount: 45,
+    status: "ACTIVE"
+  },
+  {
+    teamId: "team-3",
+    teamCode: "TD-BETONG-03",
+    teamName: "Tổ Bê Tông - Đội Dũng",
+    leaderName: "Lê Văn Dũng",
+    phone: "0988.345.678",
+    idCard: "201478562",
+    bankAccount: "5601000123456 - BIDV Hải Châu",
+    bankName: "BIDV",
+    specialty: "Đổ bê tông thương phẩm & Vận hành bơm cần",
+    membersCount: 26,
+    status: "ACTIVE"
+  },
+  {
+    teamId: "team-4",
+    teamCode: "TD-HOANTHIEN-04",
+    teamName: "Tổ Xây Trát - Đội Cường",
+    leaderName: "Phạm Quốc Cường",
+    phone: "0935.678.901",
+    idCard: "201789234",
+    bankAccount: "190345678910 - Techcombank Đà Nẵng",
+    bankName: "Techcombank",
+    specialty: "Xây tường ngăn & Trát hoàn thiện căn hộ",
+    membersCount: 32,
+    status: "ACTIVE"
+  }
+];
+
+// Bảng đơn giá vào (Hòa Bình trả) vs đơn giá ra (Giao khoán cho Tổ đội)
+// Tự động tính chênh lệch độ dôi lợi nhuận
+export const INITIAL_TEAM_BOQ = [
+  {
+    teamBoqId: "tboq-1",
+    teamCode: "TD-THEP-01",
+    teamName: "Tổ Thép - Đội Tuấn",
+    itemCode: "2.1.1.1.2.10",
+    description: "Gia công lắp dựng cốt thép dầm sàn Tòa M1, M2 (D10 - D32)",
+    unit: "KG",
+    contractQty: 4850000,
+    unitPriceIn: 3850,       // Đơn giá Hòa Bình trả (chưa VAT)
+    unitPriceOut: 2900,      // Đơn giá giao khoán cho Tổ Thép Tuấn
+    assignedQty: 4850000,
+    note: "Bao gồm gia công tại bãi, vận chuyển cẩu tháp, buộc kẽm hoàn thiện"
+  },
+  {
+    teamBoqId: "tboq-2",
+    teamCode: "TD-THEP-01",
+    teamName: "Tổ Thép - Đội Tuấn",
+    itemCode: "2.1.1.1.2.11",
+    description: "Gia công lắp dựng cốt thép cột vách lõi thang máy Tòa M1",
+    unit: "KG",
+    contractQty: 1650000,
+    unitPriceIn: 4200,
+    unitPriceOut: 3200,
+    assignedQty: 1650000,
+    note: "Thép vách nối coupler và buộc đai dày"
+  },
+  {
+    teamBoqId: "tboq-3",
+    teamCode: "TD-COFFA-02",
+    teamName: "Tổ Coffa - Đội Hải",
+    itemCode: "2.1.2.1.1.05",
+    description: "Lắp dựng và tháo dỡ ván khuôn nhôm sàn căn hộ điển hình",
+    unit: "m2",
+    contractQty: 125000,
+    unitPriceIn: 165000,
+    unitPriceOut: 125000,
+    assignedQty: 125000,
+    note: "Ván khuôn nhôm phụ kiện nhôm nguyên khối, chu kỳ 5 ngày/sàn"
+  },
+  {
+    teamBoqId: "tboq-4",
+    teamCode: "TD-COFFA-02",
+    teamName: "Tổ Coffa - Đội Hải",
+    itemCode: "2.1.2.1.1.08",
+    description: "Lắp dựng và tháo dỡ ván khuôn cột vách Tòa M1, M2",
+    unit: "m2",
+    contractQty: 85000,
+    unitPriceIn: 185000,
+    unitPriceOut: 140000,
+    assignedQty: 85000,
+    note: "Hệ giàn giáo bao che và giằng chống an toàn"
+  },
+  {
+    teamBoqId: "tboq-5",
+    teamCode: "TD-BETONG-03",
+    teamName: "Tổ Bê Tông - Đội Dũng",
+    itemCode: "2.1.3.1.1.01",
+    description: "Đổ và đầm bê tông thương phẩm sàn dầm Tòa M1 (B35)",
+    unit: "m3",
+    contractQty: 42000,
+    unitPriceIn: 145000,
+    unitPriceOut: 110000,
+    assignedQty: 42000,
+    note: "Đổ ca đêm, hoàn thiện mặt xoa phẳng bằng máy, bảo dưỡng nilon"
+  },
+  {
+    teamBoqId: "tboq-6",
+    teamCode: "TD-HOANTHIEN-04",
+    teamName: "Tổ Xây Trát - Đội Cường",
+    itemCode: "3.1.1.1.1.02",
+    description: "Xây tường ngăn căn hộ bằng gạch bê tông nhẹ AAC dày 100mm",
+    unit: "m2",
+    contractQty: 68000,
+    unitPriceIn: 185000,
+    unitPriceOut: 140000,
+    assignedQty: 68000,
+    note: "Bao gồm râu thép liên kết cột vách và lưới chống nứt"
+  }
+];
+
+// Sổ nhật ký Tạm ứng tiền mặt & Phạt hiện trường hàng ngày
+export const INITIAL_TEAM_TRANSACTIONS = [
+  {
+    transId: "tr-01",
+    teamCode: "TD-THEP-01",
+    teamName: "Tổ Thép - Đội Tuấn",
+    transDate: "2026-09-08",
+    transType: "ADVANCE",
+    transTypeName: "Tạm ứng tiền mặt lương tuần",
+    amount: 150000000,
+    note: "Ứng lương tuần 1 tháng 9 cho 38 công nhân tổ thép"
+  },
+  {
+    transId: "tr-02",
+    teamCode: "TD-THEP-01",
+    teamName: "Tổ Thép - Đội Tuấn",
+    transDate: "2026-09-15",
+    transType: "ADVANCE",
+    transTypeName: "Tạm ứng tiền mặt lương tuần",
+    amount: 120000000,
+    note: "Ứng lương tuần 2 tháng 9"
+  },
+  {
+    transId: "tr-03",
+    teamCode: "TD-THEP-01",
+    teamName: "Tổ Thép - Đội Tuấn",
+    transDate: "2026-09-22",
+    transType: "PENALTY",
+    transTypeName: "Phạt vi phạm an toàn lao động",
+    amount: 5000000,
+    note: "Hòa Bình lập biên bản: 2 công nhân không đeo dây an toàn khi buộc thép mép biên tầng 21"
+  },
+  {
+    transId: "tr-04",
+    teamCode: "TD-COFFA-02",
+    teamName: "Tổ Coffa - Đội Hải",
+    transDate: "2026-09-10",
+    transType: "ADVANCE",
+    transTypeName: "Tạm ứng tiền mặt lương tuần",
+    amount: 180000000,
+    note: "Ứng tiền lương tuần cho 45 công nhân tổ coffa"
+  },
+  {
+    transId: "tr-05",
+    teamCode: "TD-COFFA-02",
+    teamName: "Tổ Coffa - Đội Hải",
+    transDate: "2026-09-18",
+    transType: "PPE",
+    transTypeName: "Trừ tiền mua đồ BHLĐ / Đồng phục",
+    amount: 12500000,
+    note: "Cấp phát 45 bộ quần áo Hòa Bình và ủng cao su chuyên dụng"
+  },
+  {
+    transId: "tr-06",
+    teamCode: "TD-BETONG-03",
+    teamName: "Tổ Bê Tông - Đội Dũng",
+    transDate: "2026-09-12",
+    transType: "ADVANCE",
+    transTypeName: "Tạm ứng tiền mặt",
+    amount: 90000000,
+    note: "Ứng chi phí ca đêm đổ bê tông sàn tầng 21"
+  },
+  {
+    transId: "tr-07",
+    teamCode: "TD-BETONG-03",
+    teamName: "Tổ Bê Tông - Đội Dũng",
+    transDate: "2026-09-25",
+    transType: "MATERIAL",
+    transTypeName: "Trừ tiền vật tư hao hụt vượt định mức",
+    amount: 8500000,
+    note: "Hao hụt bê tông vung vãi chân bơm tầng 20"
+  }
+];
+
+// Bảng thanh toán lương Tổ đội theo Đợt 13
+export const INITIAL_TEAM_PAYMENTS = [
+  {
+    teamPayId: "tpay-13-thep",
+    paymentId: "20261019054706",
+    periodNo: 13,
+    periodName: "Thanh toán Đợt 13 (Kỳ tháng 09/2026)",
+    teamCode: "TD-THEP-01",
+    teamName: "Tổ Thép - Đội Tuấn",
+    leaderName: "Nguyễn Văn Tuấn",
+    fromDate: "2026-09-01",
+    toDate: "2026-09-30",
+    grossAmount: 1160000000,     // Tổng giá trị nghiệm thu kỳ này (400 tấn thép x 2.900đ)
+    cashAdvance: 270000000,     // Tổng tạm ứng tiền mặt trong kỳ
+    deductMaterial: 15000000,   // Trừ que hàn, đá cắt, kẽm buộc
+    deductPpe: 8000000,         // Trừ BHLĐ
+    deductViolation: 5000000,   // Trừ phạt vi phạm ATLĐ
+    retentionAmount: 58000000,  // Giữ lại bảo hành 5%
+    netPaid: 804000000,         // Thực chi cho Đội trưởng Tuấn
+    status: "APPROVED"
+  },
+  {
+    teamPayId: "tpay-13-coffa",
+    paymentId: "20261019054706",
+    periodNo: 13,
+    periodName: "Thanh toán Đợt 13 (Kỳ tháng 09/2026)",
+    teamCode: "TD-COFFA-02",
+    teamName: "Tổ Coffa - Đội Hải",
+    leaderName: "Trần Đình Hải",
+    fromDate: "2026-09-01",
+    toDate: "2026-09-30",
+    grossAmount: 1450000000,     // Nghiệm thu 11.600m2 ván khuôn x 125.000đ
+    cashAdvance: 350000000,
+    deductMaterial: 25000000,
+    deductPpe: 12500000,
+    deductViolation: 0,
+    retentionAmount: 72500000,
+    netPaid: 990000000,
+    status: "APPROVED"
+  },
+  {
+    teamPayId: "tpay-13-betong",
+    paymentId: "20261019054706",
+    periodNo: 13,
+    periodName: "Thanh toán Đợt 13 (Kỳ tháng 09/2026)",
+    teamCode: "TD-BETONG-03",
+    teamName: "Tổ Bê Tông - Đội Dũng",
+    leaderName: "Lê Văn Dũng",
+    fromDate: "2026-09-01",
+    toDate: "2026-09-30",
+    grossAmount: 462000000,      // Nghiệm thu 4.200m3 bê tông x 110.000đ
+    cashAdvance: 90000000,
+    deductMaterial: 8500000,
+    deductPpe: 4500000,
+    deductViolation: 0,
+    retentionAmount: 23100000,
+    netPaid: 335900000,
+    status: "APPROVED"
+  }
+];
+
+// Cấu hình kết nối Google Sheets & Nhật ký đồng bộ
+export const INITIAL_GSHEET_CONFIGS = [
+  {
+    configId: "gsheet-01",
+    contractNo: "0103/NEWTOWN/NAMKHOI/2026",
+    contractTitle: "Newtown - Hòa Bình (Nam Khôi)",
+    spreadsheetId: "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+    spreadsheetUrl: "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit",
+    syncMode: "REALTIME",
+    isActive: true,
+    lastSyncedAt: "2026-11-13 07:30:00"
+  }
+];
+
+export const INITIAL_GSHEET_SYNC_LOGS = [
+  {
+    logId: "log-01",
+    configId: "gsheet-01",
+    targetSheetName: "DeNghiTT_HB",
+    recordRefId: "20261019054706",
+    description: "Đồng bộ Đợt 13: Đề nghị thanh toán với Hòa Bình (Trang 1)",
+    syncStatus: "SUCCESS",
+    syncedAt: "2026-11-13 07:30:15",
+    errorMessage: null
+  },
+  {
+    logId: "log-02",
+    configId: "gsheet-01",
+    targetSheetName: "ThanhToan_ToDoi",
+    recordRefId: "TPAY-13-ALL",
+    description: "Đồng bộ Bảng lương & quyết toán 3 Tổ đội Đợt 13",
+    syncStatus: "SUCCESS",
+    syncedAt: "2026-11-13 07:30:20",
+    errorMessage: null
+  },
+  {
+    logId: "log-03",
+    configId: "gsheet-01",
+    targetSheetName: "SoTamUng",
+    recordRefId: "TR-ALL-SEP",
+    description: "Đồng bộ Sổ nhật ký ứng tiền mặt & phạt tháng 9/2026",
+    syncStatus: "SUCCESS",
+    syncedAt: "2026-11-13 07:30:25",
+    errorMessage: null
+  }
+];
+
+// Danh mục BOQ 115 đầu việc chuẩn cho HĐ 0103/NEWTOWN/NAMKHOI/2026
+export const NEWTOWN_BOQ_SECTIONS = [
+  {
+    sectionCode: "I",
+    sectionName: "Công tác Bê tông, Cốt thép & Ván khuôn Tòa M1 (Tầng 1 đến Tầng 35)",
+    items: [
+      {
+        stt: "1",
+        jobCode: "2.1.1.1.2.10",
+        name: "Gia công lắp dựng cốt thép dầm sàn Tòa M1 (D10 - D32)",
+        unit: "KG",
+        contractQty: 2450000,
+        prevUnpaidQty: 0,
+        prevPaidQty: 1850000,
+        thisPeriodAcceptedQty: 250000,
+        totalCumulativeQty: 2100000,
+        thisPeriodRequestedQty: 250000,
+        unitPriceContract: 3850,
+        unitPriceAdditional: 0,
+        contractVal: 9432500000,
+        prevUnpaidVal: 0,
+        thisPeriodAcceptedVal: 962500000,
+        thisPeriodRequestedVal: 962500000,
+        thisPeriodUnpaidVal: 0,
+        prevPaidVal: 7122500000,
+        totalPaidToDateVal: 8085000000,
+        note: "Đã KCS nghiệm thu"
+      },
+      {
+        stt: "2",
+        jobCode: "2.1.1.1.2.11",
+        name: "Gia công lắp dựng cốt thép cột vách lõi thang máy Tòa M1",
+        unit: "KG",
+        contractQty: 850000,
+        prevUnpaidQty: 0,
+        prevPaidQty: 620000,
+        thisPeriodAcceptedQty: 95000,
+        totalCumulativeQty: 715000,
+        thisPeriodRequestedQty: 95000,
+        unitPriceContract: 4200,
+        unitPriceAdditional: 0,
+        contractVal: 3570000000,
+        prevUnpaidVal: 0,
+        thisPeriodAcceptedVal: 399000000,
+        thisPeriodRequestedVal: 399000000,
+        thisPeriodUnpaidVal: 0,
+        prevPaidVal: 2604000000,
+        totalPaidToDateVal: 3003000000,
+        note: "Nghiệm thu tầng 20-22"
+      },
+      {
+        stt: "3",
+        jobCode: "2.1.2.1.1.05",
+        name: "Lắp dựng và tháo dỡ ván khuôn nhôm sàn căn hộ điển hình Tòa M1",
+        unit: "m2",
+        contractQty: 65000,
+        prevUnpaidQty: 0,
+        prevPaidQty: 48000,
+        thisPeriodAcceptedQty: 7500,
+        totalCumulativeQty: 55500,
+        thisPeriodRequestedQty: 7500,
+        unitPriceContract: 165000,
+        unitPriceAdditional: 0,
+        contractVal: 10725000000,
+        prevUnpaidVal: 0,
+        thisPeriodAcceptedVal: 1237500000,
+        thisPeriodRequestedVal: 1237500000,
+        thisPeriodUnpaidVal: 0,
+        prevPaidVal: 7920000000,
+        totalPaidToDateVal: 9157500000,
+        note: "Chu kỳ nhôm 5 ngày"
+      },
+      {
+        stt: "4",
+        jobCode: "2.1.3.1.1.01",
+        name: "Đổ và đầm bê tông thương phẩm sàn dầm Tòa M1 (B35)",
+        unit: "m3",
+        contractQty: 22000,
+        prevUnpaidQty: 0,
+        prevPaidQty: 16200,
+        thisPeriodAcceptedQty: 2400,
+        totalCumulativeQty: 18600,
+        thisPeriodRequestedQty: 2400,
+        unitPriceContract: 145000,
+        unitPriceAdditional: 0,
+        contractVal: 3190000000,
+        prevUnpaidVal: 0,
+        thisPeriodAcceptedVal: 348000000,
+        thisPeriodRequestedVal: 348000000,
+        thisPeriodUnpaidVal: 0,
+        prevPaidVal: 2349000000,
+        totalPaidToDateVal: 2697000000,
+        note: "Bê tông thương phẩm B35"
+      }
+    ]
+  },
+  {
+    sectionCode: "II",
+    sectionName: "Công tác Bê tông, Cốt thép & Ván khuôn Tòa M2 (Tầng 1 đến Tầng 35)",
+    items: [
+      {
+        stt: "1",
+        jobCode: "2.2.1.1.2.10",
+        name: "Gia công lắp dựng cốt thép dầm sàn Tòa M2 (D10 - D32)",
+        unit: "KG",
+        contractQty: 2400000,
+        prevUnpaidQty: 0,
+        prevPaidQty: 1780000,
+        thisPeriodAcceptedQty: 260000,
+        totalCumulativeQty: 2040000,
+        thisPeriodRequestedQty: 260000,
+        unitPriceContract: 3850,
+        unitPriceAdditional: 0,
+        contractVal: 9240000000,
+        prevUnpaidVal: 0,
+        thisPeriodAcceptedVal: 1001000000,
+        thisPeriodRequestedVal: 1001000000,
+        thisPeriodUnpaidVal: 0,
+        prevPaidVal: 6853000000,
+        totalPaidToDateVal: 7854000000,
+        note: "Đã KCS nghiệm thu"
+      },
+      {
+        stt: "2",
+        jobCode: "2.2.2.1.1.05",
+        name: "Lắp dựng và tháo dỡ ván khuôn nhôm sàn căn hộ điển hình Tòa M2",
+        unit: "m2",
+        contractQty: 60000,
+        prevUnpaidQty: 0,
+        prevPaidQty: 44000,
+        thisPeriodAcceptedQty: 6800,
+        totalCumulativeQty: 50800,
+        thisPeriodRequestedQty: 6800,
+        unitPriceContract: 165000,
+        unitPriceAdditional: 0,
+        contractVal: 9900000000,
+        prevUnpaidVal: 0,
+        thisPeriodAcceptedVal: 1122000000,
+        thisPeriodRequestedVal: 1122000000,
+        thisPeriodUnpaidVal: 0,
+        prevPaidVal: 7260000000,
+        totalPaidToDateVal: 8382000000,
+        note: "Ván khuôn nhôm đạt chuẩn"
+      }
+    ]
+  }
+];
+
